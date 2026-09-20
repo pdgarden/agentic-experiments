@@ -221,3 +221,5 @@ tmp/
 .vscode/
 data/*
 !data/.gitkeep
+.claude/
+.agents/
