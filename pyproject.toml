@@ -5,6 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "aiosqlite>=0.22.1",
     "langfuse>=4.14.4",
     "nest-asyncio>=1.6.0",
     "openai-agents>=0.22.0",
@@ -19,3 +20,43 @@ build-backend = "uv_build"
 [tool.uv.build-backend]
 module-name = "src"
 module-root = ""
+
+[dependency-groups]
+dev = [
+    "pyright>=1.1.414",
+    "ruff>=0.16.8",
+]
+
+[tool.ruff.lint]
+select = [
+    "ARG",  # unused arguments
+    "E",  # pycodestyle
+    "W",  # pycodestyle warnings
+    "F",  # Pyflakes
+    "UP",  # pyupgrade
+    "B",  # flake8-bugbear
+    "SIM",  # flake8-simplify
+    "I",  # isort
+    "Q",  # quotes
+    "TID", # flake8-tidy-imports
+]
+ignore = [
+    "B904",
+    "E741" # in bbox definitions we use "l" for left
+]
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[tool.pyright]  # Cannot be extended | Used by VSCode
+root = "."
+typeCheckingMode = "strict"
+reportMissingTypeStubs = false
+reportIncompatibleVariableOverride = "none"
+exclude = [
+    ".git",
+    "**/.venv",
+    "**/__pycache__",
+    "**/.*",
+    "**/node_modules",
+]

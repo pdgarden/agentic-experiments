@@ -1,21 +1,27 @@
+import asyncio
 import os
 from pathlib import Path
-from dotenv import load_dotenv
+
+import nest_asyncio
 from agents import (
     Agent,
-    Runner,
-    AsyncOpenAI,
     OpenAIChatCompletionsModel,
+    Runner,
 )
-import nest_asyncio
-from openinference.instrumentation.openai_agents import OpenAIAgentsInstrumentor
-from langfuse import get_client
 from agents.decorators import tool
+from agents.extensions.memory import AsyncSQLiteSession
+from dotenv import load_dotenv
+from langfuse import get_client
+from openai import AsyncOpenAI
+from openinference.instrumentation.openai_agents import OpenAIAgentsInstrumentor
 
-nest_asyncio.apply()
+# Setup
+
+nest_asyncio.apply()  # pyright: ignore[reportUnknownMemberType]
 dotenv_path = Path(__file__).parents[1] / ".env"
 load_dotenv(dotenv_path)
 OpenAIAgentsInstrumentor().instrument()
+
 
 langfuse = get_client()
 # Verify connection
@@ -32,7 +38,6 @@ client = AsyncOpenAI(
 )
 model = OpenAIChatCompletionsModel(model=model_id, openai_client=client)
 
-
 # Tools
 
 
@@ -48,8 +53,16 @@ agent = Agent(
     tools=[divide],
 )
 
-result = Runner.run_sync(
-    agent,
-    "What is 4201.1 / 33.1 ? DO NOT overthink. Are the 4 numbers after the comma higher than the current year ? use the tools at your disposal.",
-)
-print(result.final_output)
+
+async def main():
+    session = AsyncSQLiteSession(
+        "session_id_0",
+        db_path=Path(__file__).parents[1] / "data" / "conversations.db",
+    )
+    result = await Runner.run(agent, "What was my previous message?", session=session)
+    print(result.final_output)
+    await session.close()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
