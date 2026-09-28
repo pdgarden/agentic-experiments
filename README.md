@@ -2,7 +2,8 @@
 
 Experiments with agentic tools and frameworks, mostly using the openai-agents SDK.
 
-A small chat agent (one `divide` tool) over an OpenAI-compatible endpoint, with
+A small chat agent (a `divide` tool, plus `run_python`, which runs code in the
+[Monty](https://github.com/pydantic/monty) sandbox) over an OpenAI-compatible endpoint, with
 conversations persisted to SQLite and traces sent to Langfuse.
 
 ## Setup
@@ -45,6 +46,7 @@ uv run python -m src.simple_agent
 | --- | --- |
 | `src/agent_config.py` | Agent, model and Langfuse setup |
 | `src/agent_runtime.py` | Background event loop, turn streaming, conversation listing |
+| `src/python_sandbox.py` | `run_python` tool backed by the Monty sandbox |
 | `src/app.py` | Streamlit chat UI |
 | `src/simple_agent.py` | Minimal one-shot example |
 | `data/conversations.db` | Conversation history (gitignored) |

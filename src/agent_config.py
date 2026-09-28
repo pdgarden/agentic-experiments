@@ -13,6 +13,8 @@ from langfuse import get_client
 from openai import AsyncOpenAI
 from openinference.instrumentation.openai_agents import OpenAIAgentsInstrumentor
 
+from src.python_sandbox import run_python
+
 DB_PATH = Path(__file__).parents[1] / "data" / "conversations.db"
 DOTENV_PATH = Path(__file__).parents[1] / ".env"
 
@@ -55,5 +57,5 @@ def build_agent() -> Agent[None]:
         name="Helping Agent",
         instructions="You are a Helping Agent",
         model=model,
-        tools=[divide],
+        tools=[divide, run_python],
     )

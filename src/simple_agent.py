@@ -6,6 +6,7 @@ from agents import Runner
 from agents.extensions.memory import AsyncSQLiteSession
 
 from src.agent_config import DB_PATH, build_agent, setup_observability
+from src.python_sandbox import close_sandbox
 
 
 async def main() -> None:
@@ -15,6 +16,7 @@ async def main() -> None:
     result = await Runner.run(agent, "What was my previous message?", session=session)
     print(result.final_output)
     await session.close()
+    await close_sandbox()
 
 
 if __name__ == "__main__":

@@ -10,6 +10,7 @@ dependencies = [
     "nest-asyncio>=1.6.0",
     "openai-agents>=0.22.0",
     "openinference-instrumentation-openai-agents>=2.0.0",
+    "pydantic-monty>=1.0.0",
     "python-dotenv>=1.2.3",
     "streamlit>=1.64.0",
 ]
