@@ -11,45 +11,6 @@ resolution-markers = [
 ]
 
 [[package]]
-name = "agentic-experiments"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "aiosqlite" },
-    { name = "langfuse" },
-    { name = "nest-asyncio" },
-    { name = "openai-agents" },
-    { name = "openinference-instrumentation-openai-agents" },
-    { name = "pydantic-monty" },
-    { name = "python-dotenv" },
-    { name = "streamlit" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "pyright" },
-    { name = "ruff" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "aiosqlite", specifier = ">=0.22.1" },
-    { name = "langfuse", specifier = ">=4.14.4" },
-    { name = "nest-asyncio", specifier = ">=1.6.0" },
-    { name = "openai-agents", specifier = ">=0.22.0" },
-    { name = "openinference-instrumentation-openai-agents", specifier = ">=2.0.0" },
-    { name = "pydantic-monty", specifier = ">=1.0.0" },
-    { name = "python-dotenv", specifier = ">=1.2.3" },
-    { name = "streamlit", specifier = ">=1.64.0" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "pyright", specifier = ">=1.1.414" },
-    { name = "ruff", specifier = ">=0.16.8" },
-]
-
-[[package]]
 name = "aiosqlite"
 version = "0.22.1"
 source = { registry = "https://pypi.org/simple" }
@@ -921,6 +882,45 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/1c/17/2a92451547a66d56bd5f10128aa64aa0fc282420421775c390902e7dfa42/openai_agents-0.22.0.tar.gz", hash = "sha256:6c3d7b9e34d3ca4bf763d4557d01ec844685290f0d80cb72e10a304029c0d7ee", size = 6390140, upload-time = "2026-08-19T13:45:22.482Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ca/88/220a5a9283fba72107db7cb549fd127a0e532dbcbc89dda82cd28b9765a1/openai_agents-0.22.0-py3-none-any.whl", hash = "sha256:985a74a8024123980c2d4dc329d19b2332a0f86919fa7b3f6b9c2abaae022680", size = 1117078, upload-time = "2026-08-19T13:45:19.876Z" },
+]
+
+[[package]]
+name = "openai-agents-streamlit"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "aiosqlite" },
+    { name = "langfuse" },
+    { name = "nest-asyncio" },
+    { name = "openai-agents" },
+    { name = "openinference-instrumentation-openai-agents" },
+    { name = "pydantic-monty" },
+    { name = "python-dotenv" },
+    { name = "streamlit" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "pyright" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "aiosqlite", specifier = ">=0.22.1" },
+    { name = "langfuse", specifier = ">=4.14.4" },
+    { name = "nest-asyncio", specifier = ">=1.6.0" },
+    { name = "openai-agents", specifier = ">=0.22.0" },
+    { name = "openinference-instrumentation-openai-agents", specifier = ">=2.0.0" },
+    { name = "pydantic-monty", specifier = ">=1.0.0" },
+    { name = "python-dotenv", specifier = ">=1.2.3" },
+    { name = "streamlit", specifier = ">=1.64.0" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "pyright", specifier = ">=1.1.414" },
+    { name = "ruff", specifier = ">=0.16.8" },
 ]
 
 [[package]]

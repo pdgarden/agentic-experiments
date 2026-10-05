@@ -1,7 +1,7 @@
 [project]
-name = "agentic-experiments"
+name = "openai-agents-streamlit"
 version = "0.1.0"
-description = "Add your description here"
+description = "Chat agent with openai-agents SDK, Monty sandbox and a Streamlit UI"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [

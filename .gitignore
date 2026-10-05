@@ -219,7 +219,10 @@ __marimo__/
 
 tmp/
 .vscode/
-data/*
-!data/.gitkeep
+**/data/*
+!**/data/.gitkeep
 .claude/
 .agents/
+
+# Node
+node_modules/
