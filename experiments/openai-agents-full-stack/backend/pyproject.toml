@@ -1,0 +1,79 @@
+[project]
+name = "openai-agents-full-stack"
+version = "0.1.0"
+description = "Backend of a full-stack openai-agents chat app: FastAPI, SQLite, SSE runs"
+requires-python = ">=3.12"
+dependencies = [
+    "aiosqlite>=0.22.1",
+    "fastapi>=0.142.2",
+    "langfuse>=4.17.0",
+    "openai-agents>=0.23.1",
+    "openinference-instrumentation-openai-agents>=2.5.2",
+    "pydantic-monty>=1.0.0",
+    "pydantic-settings>=2.15.0",
+    "uvicorn>=0.54.0",
+]
+
+[build-system]
+requires = ["uv_build>=0.9.0,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "src"
+module-root = ""
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "pyright>=1.1.414",
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.16.10",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+
+[tool.coverage.run]
+source = ["src"]
+
+[tool.ruff]
+src = ["."]  # src/agents must not make the SDK's `agents` first-party
+
+[tool.ruff.lint]
+select = [
+    "ARG",  # unused arguments
+    "E",  # pycodestyle
+    "W",  # pycodestyle warnings
+    "F",  # Pyflakes
+    "UP",  # pyupgrade
+    "B",  # flake8-bugbear
+    "SIM",  # flake8-simplify
+    "I",  # isort
+    "Q",  # quotes
+    "TID", # flake8-tidy-imports
+]
+ignore = [
+    "B904",
+]
+
+[tool.ruff.lint.isort]
+known-third-party = ["agents"]
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[tool.pyright]  # Cannot be extended | Used by VSCode
+typeCheckingMode = "strict"
+reportMissingTypeStubs = false
+reportIncompatibleVariableOverride = "none"
+exclude = [
+    ".git",
+    "**/.venv",
+    "**/__pycache__",
+    "**/.*",
+    "**/node_modules",
+]
