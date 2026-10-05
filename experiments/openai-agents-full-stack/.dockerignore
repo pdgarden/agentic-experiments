@@ -1,0 +1,12 @@
+**/.env
+**/.venv
+**/node_modules
+**/__pycache__
+**/.*_cache
+**/.coverage
+backend/data
+backend/tests
+frontend/dist
+frontend/coverage
+frontend/test-results
+frontend/playwright-report

@@ -1,0 +1,5 @@
+dist/
+coverage/
+openapi.json
+test-results/
+playwright-report/

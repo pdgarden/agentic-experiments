@@ -1,0 +1,15 @@
+services:
+  app:
+    build: .
+    ports:
+      - "127.0.0.1:8000:8000"
+    env_file: backend/.env
+    environment:
+      # Paths inside the image; they win over any DB_PATH in backend/.env.
+      DB_PATH: /data/app.db
+      FRONTEND_DIST: /app/frontend/dist
+    volumes:
+      - data:/data
+
+volumes:
+  data:

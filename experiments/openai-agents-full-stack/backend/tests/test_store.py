@@ -1,3 +1,4 @@
+import asyncio
 from pathlib import Path
 
 import pytest
@@ -97,3 +98,41 @@ async def test_interrupt_running_runs(store: Store) -> None:
     assert isinstance(last, RunFinished)
     assert (last.seq, last.status) == (2, "interrupted")
     assert await store.interrupt_running_runs() == []
+
+
+async def test_reads_do_not_hold_a_snapshot_across_awaits(tmp_path: Path) -> None:
+    """Writes stay possible while a read runs and another connection commits.
+
+    The store shares one connection between coroutines. A read that keeps its
+    cursor open across awaits holds a WAL snapshot; an insert interleaved on that
+    connection after another connection's commit (the SDK session's) then fails
+    at once with "database is locked", whatever the busy timeout.
+    """
+    conn = await connect(tmp_path / "app.db")
+    other = await connect(tmp_path / "app.db")
+    store, sdk_like = Store(conn), Store(other)
+    session = await store.create_session("assistant")
+    run = await store.create_run(session.id, [TextPart(text="hi")])
+    for seq in range(1, 301):
+        await store.append_event(
+            TextDelta(run_id=run.id, seq=seq, segment_id="s1", delta="x")
+        )
+
+    async def write() -> None:
+        for seq in range(301, 341):
+            await sdk_like.create_session("assistant")
+            await store.append_event(
+                TextDelta(run_id=run.id, seq=seq, segment_id="s1", delta="y")
+            )
+
+    async def read() -> None:
+        for _ in range(20):
+            await store.events_by_run(session.id)
+            await store.list_events(run.id)
+
+    try:
+        await asyncio.gather(write(), read(), read())
+        assert len(await store.list_events(run.id)) == 340
+    finally:
+        await other.close()
+        await conn.close()

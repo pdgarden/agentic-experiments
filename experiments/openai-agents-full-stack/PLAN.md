@@ -1,6 +1,6 @@
 # openai-agents-full-stack — design plan
 
-Plan for a local, single-user, full-stack AI agent app. v1a (backend) is implemented; v1b (frontend) is next.
+Plan for a local, single-user, full-stack AI agent app. v1a (backend) and v1b (frontend) are implemented; the sandbox protocol is next.
 
 ## Goals
 
@@ -172,15 +172,16 @@ Events are the only source of UI history; there is no `messages` table. The fron
 - **One-command workflows**: `make dev`, `make check`, `make run`, `make gen-types`.
 - No code shared with other experiments (repo rule): copy code and config, don't import.
 
-## v1b notes (state left by v1a)
+## v1b notes (as built)
 
-- `pnpm` is not installed on this machine yet (`corepack enable` or `brew install pnpm`).
-- The backend runs on `:8000` (`make dev`); the Vite dev server proxies `/api` there.
-- The event and part unions are published in `/openapi.json` (`make openapi` prints it, no server needed): `components.schemas.Event` / `Part`, and the SSE route's `itemSchema.data.contentSchema` points at `Event`. This is the input for `gen-types`.
-- SSE messages carry `id: <seq>` and `data: <Event JSON>` on the default `message` event; resume with `?after=<seq>` or `Last-Event-ID`. The stream closes after `run_finished`.
-- `GET /api/sessions/{id}` returns `{session, runs: [{…run, events}]}`: fold each run's events with the same reducer as the live stream.
-- Reducer test input: `backend/tests/fixtures/events/tool_roundtrip.json` (events without `run_id`/`session_id`); re-record with `make fixtures`.
-- `Makefile` to extend: `gen-types`, frontend lint/type/test in `check`, `dev` running both servers, and `run` building `frontend/dist` first. The backend already serves `frontend/dist` at `/` when it exists.
+- Types: `openapi-typescript` → `frontend/src/api/schema.gen.ts`, plus `openapi-fetch` for the REST client. TypeScript is pinned to 5.x (TS 7 has no JS compiler API, which `openapi-typescript` needs); pnpm to 11 (pnpm 12 does not run under the installed corepack).
+- Stream client: `EventSource` with `?after=<lastSeq>`; it closes itself on `run_finished` (otherwise `EventSource` reconnects forever) and drops events at or below the last seq, so replay overlap is harmless.
+- Reducer (`src/chat/reducer.ts`): `RunView` per run, with `parts: Part | AgentPart`. `AgentPart` is UI-only and marks a handoff. Text deltas join by `segment_id`; results attach to calls by `call_id`; events of unknown type or version only advance `lastSeq`. A stored run's record status and error back up an event log that stops early.
+- Session state merges loaded history with live events by keeping the view with the higher `lastSeq`. One `useChat` hook subscribes to the session's single running run from its `lastSeq`, so a reload resumes the run without extra code.
+- A tool card whose call never got a result shows "no result" once the run has ended (the reducer keeps the event-derived `running`).
+- Routing: the selected session is in the URL hash. A new chat is created on its first message.
+- Backend fix found by the e2e test: store reads iterated their cursor across awaits on the shared connection, so an event insert interleaved with a read failed with "database is locked" after the SDK session's connection committed (a stale WAL snapshot; `busy_timeout` does not help). Reads now fetch in one step (`Store._rows`); `test_reads_do_not_hold_a_snapshot_across_awaits` covers it.
+- E2E: `backend/tests/e2e_app.py` builds the app with a scripted model (tool call, then the tool's output as the answer; "slowly" delays the answer so a test can reload mid-run). Playwright starts it on a temp DB, serving `frontend/dist`.
 
 ## Roadmap
 
