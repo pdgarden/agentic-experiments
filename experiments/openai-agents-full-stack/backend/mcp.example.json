@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "fetch": {
+      "command": "uvx",
+      "args": ["mcp-server-fetch"]
+    },
+    "remote-example": {
+      "url": "https://example.com/mcp",
+      "headers": { "Authorization": "Bearer ${EXAMPLE_MCP_TOKEN}" },
+      "enabled": false
+    }
+  }
+}
