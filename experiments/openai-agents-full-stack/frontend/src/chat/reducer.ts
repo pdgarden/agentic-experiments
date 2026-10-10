@@ -115,6 +115,23 @@ export function applyEvent(run: RunView, event: Event): RunView {
       return { ...next, parts: replaceAt(next.parts, index, done) };
     }
 
+    // One part per write: each message shows the version it made, even after later updates.
+    case "artifact_created":
+    case "artifact_updated":
+      return {
+        ...next,
+        parts: [
+          ...next.parts,
+          {
+            type: "artifact",
+            artifact_id: event.artifact_id,
+            kind: event.kind,
+            title: event.title,
+            version: event.version,
+          },
+        ],
+      };
+
     case "agent_changed":
       return {
         ...next,

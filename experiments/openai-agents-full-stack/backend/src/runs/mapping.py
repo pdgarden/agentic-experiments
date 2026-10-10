@@ -11,7 +11,16 @@ from agents import (
 )
 
 from src.agents.tool_errors import ToolErrorText
-from src.events import AgentChanged, Event, TextDelta, ToolCall, ToolResult
+from src.artifacts.output import ArtifactOutput
+from src.events import (
+    AgentChanged,
+    ArtifactCreated,
+    ArtifactUpdated,
+    Event,
+    TextDelta,
+    ToolCall,
+    ToolResult,
+)
 
 
 class EventMapper:
@@ -55,13 +64,16 @@ class EventMapper:
         if event.name == "tool_output" and isinstance(item, ToolCallOutputItem):
             self._segment_open = False
             output: object = item.output
-            return [
+            events: list[Event] = [
                 ToolResult(
                     call_id=item.call_id or "",
                     result=_output_text(output),
                     is_error=isinstance(output, ToolErrorText),
                 )
             ]
+            if isinstance(output, ArtifactOutput):
+                events.append(_artifact_event(output))
+            return events
         return []
 
     def _segment_id(self) -> str:
@@ -69,6 +81,17 @@ class EventMapper:
             self._segments += 1
             self._segment_open = True
         return f"s{self._segments}"
+
+
+def _artifact_event(output: ArtifactOutput) -> Event:
+    """Emitted here rather than from the tool: the tool runs while the stream is
+    being recorded, and only this loop stamps sequence numbers.
+    """
+    ref = output.ref
+    event = ArtifactCreated if ref.created else ArtifactUpdated
+    return event(
+        artifact_id=ref.artifact_id, kind=ref.kind, title=ref.title, version=ref.version
+    )
 
 
 def _field(raw: object, name: str) -> object:

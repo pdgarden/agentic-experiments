@@ -36,6 +36,13 @@ export function useChat(sessionId: string, createSource?: EventSourceFactory) {
       {
         onEvent: (event) => {
           dispatch({ type: "event", runId: activeId, event });
+          if (event.type === "artifact_created" || event.type === "artifact_updated") {
+            void queryClient.invalidateQueries({ queryKey: queryKeys.sessionArtifacts(sessionId) });
+            void queryClient.invalidateQueries({
+              queryKey: queryKeys.artifact(event.artifact_id),
+              exact: true,
+            });
+          }
           if (event.type === "run_finished") {
             void queryClient.invalidateQueries({ queryKey: queryKeys.sessions });
           }

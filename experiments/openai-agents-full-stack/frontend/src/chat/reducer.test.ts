@@ -67,6 +67,26 @@ describe("tool_roundtrip", () => {
   });
 });
 
+describe("chart_roundtrip", () => {
+  it("keeps one artifact part per version, after its tool card", () => {
+    const run = fold(fixture("chart_roundtrip"));
+    expect(run.status).toBe("succeeded");
+    expect(run.parts.map((part) => part.type)).toEqual([
+      "tool",
+      "artifact",
+      "tool",
+      "artifact",
+      "text",
+    ]);
+    const artifacts = run.parts.filter((part) => part.type === "artifact");
+    expect(artifacts).toEqual([
+      expect.objectContaining({ kind: "chart", title: "LeBron points", version: 1 }),
+      expect.objectContaining({ kind: "chart", title: "LeBron points (line)", version: 2 }),
+    ]);
+    expect(new Set(artifacts.map((part) => part.artifact_id)).size).toBe(1);
+  });
+});
+
 describe("applyEvent", () => {
   beforeEach(resetSeq);
 
@@ -139,7 +159,7 @@ describe("applyEvent", () => {
       v: 1,
       run_id: "run-1",
       seq: 1,
-      type: "artifact_created",
+      type: "file_uploaded",
     } as unknown as Event;
     const newVersion = {
       ...ev("text_delta", { segment_id: "s1", delta: "x" }),

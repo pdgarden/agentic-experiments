@@ -1,6 +1,7 @@
 import { ArrowRightLeft } from "lucide-react";
 import type { ComponentType } from "react";
 import type { ViewPart } from "@/chat/reducer";
+import { ArtifactCard } from "@/components/ArtifactCard";
 import { Markdown } from "@/components/Markdown";
 import { ToolCard } from "@/components/ToolCard";
 
@@ -17,6 +18,7 @@ type Renderers = {
 const renderers: Renderers = {
   text: ({ part }) => <Markdown text={part.text} />,
   tool: ({ part, runActive }) => <ToolCard part={part} runActive={runActive} />,
+  artifact: ({ part }) => <ArtifactCard part={part} />,
   agent: ({ part }) => (
     <div className="flex items-center gap-2 text-xs text-muted-foreground">
       <ArrowRightLeft className="size-3" /> Handed off to{" "}

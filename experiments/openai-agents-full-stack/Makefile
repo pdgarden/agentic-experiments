@@ -57,7 +57,7 @@ e2e: ## Playwright happy path against the backend with a scripted model
 	$(PNPM) e2e
 
 fixtures: ## Re-record the event fixtures shared with the frontend reducer tests
-	cd $(BACKEND) && UPDATE_FIXTURES=1 uv run pytest -q tests/test_api.py
+	cd $(BACKEND) && UPDATE_FIXTURES=1 uv run pytest -q tests/test_api.py tests/test_artifacts.py
 
 openapi: ## Print the OpenAPI schema, including the stream event contract
 	@$(UV) python -c "import json; from src.app import create_app; print(json.dumps(create_app().openapi(), indent=2))"

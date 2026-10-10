@@ -32,6 +32,7 @@ from src.events import (
     UserMessage,
 )
 from src.parts import InputPart, input_text
+from src.runs.context import RunContext
 from src.runs.live import LiveRun, LiveRuns
 from src.runs.mapping import EventMapper
 from src.runs.sdk_sessions import SdkSessions
@@ -192,6 +193,9 @@ class RunService:
             result = Runner.run_streamed(
                 agent,
                 input_text(run.input),
+                context=RunContext(
+                    session_id=session.id, run_id=run.id, store=self._store
+                ),
                 session=self._sdk_sessions.get(session.id),
                 max_turns=self._settings.max_turns,
             )

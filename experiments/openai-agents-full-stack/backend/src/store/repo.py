@@ -1,4 +1,4 @@
-"""App data access: sessions, runs and their events.
+"""App data access: sessions, runs, their events, and artifacts.
 
 The agent's own input-item history lives in the SDK's tables, see
 ``src.runs.sdk_sessions``; this module never reads or writes them.
@@ -11,6 +11,14 @@ from datetime import UTC, datetime
 import aiosqlite
 from pydantic import BaseModel, TypeAdapter
 
+from src.artifacts.models import (
+    ArtifactContent,
+    ArtifactKind,
+    ArtifactRecord,
+    ArtifactVersionInfo,
+    ArtifactVersionRecord,
+    content_adapter,
+)
 from src.events import (
     Event,
     FinalRunStatus,
@@ -76,6 +84,28 @@ def _run(row: aiosqlite.Row) -> RunRecord:
         ended_at=row["ended_at"],
         usage=Usage.model_validate_json(usage) if usage else None,
         error=row["error"],
+    )
+
+
+def _artifact(row: aiosqlite.Row) -> ArtifactRecord:
+    return ArtifactRecord(
+        id=row["id"],
+        session_id=row["session_id"],
+        kind=row["kind"],
+        title=row["title"],
+        latest_version=row["latest_version"],
+        created_at=row["created_at"],
+        updated_at=row["updated_at"],
+    )
+
+
+def _version_info(row: aiosqlite.Row) -> ArtifactVersionInfo:
+    return ArtifactVersionInfo(
+        artifact_id=row["artifact_id"],
+        version=row["version"],
+        run_id=row["run_id"],
+        title=row["title"],
+        created_at=row["created_at"],
     )
 
 
@@ -261,3 +291,122 @@ class Store:
         for row in rows:
             grouped.setdefault(row[0], []).append(event_adapter.validate_json(row[1]))
         return grouped
+
+    # Artifacts
+
+    async def create_artifact(
+        self,
+        session_id: str,
+        kind: ArtifactKind,
+        title: str,
+        content: ArtifactContent,
+        run_id: str,
+    ) -> ArtifactRecord:
+        """A new artifact with ``content`` as its version 1."""
+        stamp = now()
+        record = ArtifactRecord(
+            id=new_id(),
+            session_id=session_id,
+            kind=kind,
+            title=title,
+            latest_version=1,
+            created_at=stamp,
+            updated_at=stamp,
+        )
+        await self._conn.execute(
+            "INSERT INTO artifacts"
+            " (id, session_id, kind, title, latest_version, created_at, updated_at)"
+            " VALUES (?, ?, ?, ?, 1, ?, ?)",
+            (record.id, session_id, kind, title, stamp, stamp),
+        )
+        await self._insert_version(record.id, 1, run_id, title, content, stamp)
+        return record
+
+    async def add_artifact_version(
+        self,
+        artifact_id: str,
+        session_id: str,
+        content: ArtifactContent,
+        run_id: str,
+        title: str | None = None,
+    ) -> ArtifactRecord | None:
+        """Append a version; ``None`` if the session has no such artifact.
+
+        The version number is claimed by one ``UPDATE … RETURNING``, so
+        concurrent updates of the same artifact get distinct numbers.
+        """
+        stamp = now()
+        rows = await self._rows(
+            "UPDATE artifacts SET latest_version = latest_version + 1,"
+            " title = COALESCE(?, title), updated_at = ?"
+            " WHERE id = ? AND session_id = ? RETURNING *",
+            (title, stamp, artifact_id, session_id),
+        )
+        if not rows:
+            return None
+        record = _artifact(rows[0])
+        await self._insert_version(
+            artifact_id, record.latest_version, run_id, record.title, content, stamp
+        )
+        return record
+
+    async def _insert_version(
+        self,
+        artifact_id: str,
+        version: int,
+        run_id: str,
+        title: str,
+        content: ArtifactContent,
+        stamp: str,
+    ) -> None:
+        await self._conn.execute(
+            "INSERT INTO artifact_versions"
+            " (artifact_id, version, run_id, title, content, created_at)"
+            " VALUES (?, ?, ?, ?, ?, ?)",
+            (
+                artifact_id,
+                version,
+                run_id,
+                title,
+                content_adapter.dump_json(content).decode(),
+                stamp,
+            ),
+        )
+
+    async def list_artifacts(self, session_id: str) -> list[ArtifactRecord]:
+        """A session's artifacts, newest first."""
+        rows = await self._rows(
+            "SELECT * FROM artifacts WHERE session_id = ?"
+            " ORDER BY created_at DESC, id DESC",
+            (session_id,),
+        )
+        return [_artifact(row) for row in rows]
+
+    async def get_artifact(self, artifact_id: str) -> ArtifactRecord | None:
+        rows = await self._rows("SELECT * FROM artifacts WHERE id = ?", (artifact_id,))
+        return _artifact(rows[0]) if rows else None
+
+    async def list_artifact_versions(
+        self, artifact_id: str
+    ) -> list[ArtifactVersionInfo]:
+        rows = await self._rows(
+            "SELECT artifact_id, version, run_id, title, created_at"
+            " FROM artifact_versions WHERE artifact_id = ? ORDER BY version",
+            (artifact_id,),
+        )
+        return [_version_info(row) for row in rows]
+
+    async def get_artifact_version(
+        self, artifact_id: str, version: int
+    ) -> ArtifactVersionRecord | None:
+        rows = await self._rows(
+            "SELECT * FROM artifact_versions WHERE artifact_id = ? AND version = ?",
+            (artifact_id, version),
+        )
+        if not rows:
+            return None
+        row = rows[0]
+        return ArtifactVersionRecord(
+            **_version_info(row).model_dump(),
+            content=content_adapter.validate_json(row["content"]),
+        )

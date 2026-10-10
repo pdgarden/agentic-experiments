@@ -14,7 +14,7 @@ from fastapi.staticfiles import StaticFiles
 from src.agents.mcp_servers import connected_mcp_servers
 from src.agents.python_tool import close_sandbox
 from src.agents.registry import build_model
-from src.api import mcp, runs, sessions
+from src.api import artifacts, mcp, runs, sessions
 from src.api.contract import install_contract
 from src.api.deps import Services
 from src.observability import setup_observability
@@ -74,6 +74,7 @@ def create_app(settings: Settings | None = None, model: Model | None = None) -> 
     api.include_router(sessions.router)
     api.include_router(runs.router)
     api.include_router(mcp.router)
+    api.include_router(artifacts.router)
     app.include_router(api)
     install_contract(app)
 

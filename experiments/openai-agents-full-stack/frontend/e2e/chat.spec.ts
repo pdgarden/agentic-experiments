@@ -70,3 +70,33 @@ test("a reload during a run resumes its stream", async ({ page }) => {
   await expect(run.getByTestId("assistant-message")).toContainText("The tool said");
   await expect(page.getByRole("button", { name: "Send" })).toBeVisible();
 });
+
+test("a chart is drawn in its message and opens in the artifacts panel", async ({ page }) => {
+  await page.goto("/");
+  await page.getByLabel("Message").fill(unique("Show a chart of points per game"));
+  await page.getByLabel("Message").press("Enter");
+
+  const run = page.getByTestId("run").first();
+  await expect(run).toHaveAttribute("data-status", "succeeded");
+  const card = run.getByTestId("artifact-card");
+  await expect(card).toContainText("Points per game");
+  await expect(card).toHaveAttribute("data-version", "1");
+  // vega draws three bars into an SVG.
+  await expect(card.locator("svg .mark-rect path")).toHaveCount(3);
+
+  await card.getByRole("button", { name: "Open Points per game" }).click();
+  await expect(page).toHaveURL(/#[0-9a-f]{32}\/[0-9a-f]{32}$/);
+  const panel = page.getByRole("complementary", { name: "Artifacts" });
+  await expect(panel.getByTestId("artifact-entry")).toHaveCount(1);
+  await expect(panel.getByTestId("artifact-entry")).toHaveAttribute("aria-current", "true");
+  await expect(panel.locator("svg .mark-rect path")).toHaveCount(3);
+
+  // The open artifact is part of the URL: a reload keeps the panel.
+  await page.reload();
+  await expect(panel.locator("svg .mark-rect path")).toHaveCount(3);
+
+  await panel.getByRole("button", { name: "Close artifacts" }).click();
+  await expect(panel).toHaveCount(0);
+  await page.getByRole("button", { name: "Artifacts (1)" }).click();
+  await expect(panel).toBeVisible();
+});

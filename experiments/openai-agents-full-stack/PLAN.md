@@ -193,12 +193,24 @@ Events are the only source of UI history; there is no `messages` table. The fron
 - MCP tool outputs are `{"type": "text" | "image", ...}` items, not strings; `mapping.py` renders them as text.
 - Tests run `tests/mcp_test_server.py` over stdio; `conftest.py` points `mcp_config_path` at an absent file so a real `mcp.json` never leaks into tests.
 
+## Artifacts notes (as built)
+
+- Scope: generic artifacts with a `kind`; only `chart` exists. A chart is a Vega-Lite spec with inline data, written by the model, validated by the backend and drawn by `vega-embed`. Nothing executes code or renders images server-side.
+- Storage (`002_artifacts.sql`): `artifacts` (`kind` with a `CHECK`, `title`, `latest_version`) and immutable `artifact_versions` (`run_id`, the title as of that version, `content` JSON). Both cascade from the session. `add_artifact_version` claims the next number with one `UPDATE … RETURNING` scoped to the session, so concurrent updates get distinct versions and another session's artifact is "not found".
+- Tools (`src/agents/artifact_tools.py`): `create_chart(title, spec)` and `update_chart(artifact_id, spec, title?)`. `spec` is a JSON string (strict function schemas cannot describe a free-form object). They see the session through `RunContext` (`src/runs/context.py`), passed as the SDK run context; agents are `Agent[RunContext]`.
+- Validation (`src/artifacts/chart.py`): JSON object, ≤ 256 KB, no `url` key anywhere outside inline rows (`values`, `datasets`), then the vendored Vega-Lite JSON schema (`vega-lite.v6.schema.json`, copied from the `vega-lite` package the frontend renders with; `$schema` in the spec is ignored, so v5 specs pass when compatible). Errors name the path and allowed values, and go back to the model as `ToolErrorText` so it can retry.
+- Events: the tools return `ArtifactOutput`, a `str` subclass like `ToolErrorText` carrying an `ArtifactRef`; `mapping.py` emits `tool_result` then `artifact_created` / `artifact_updated` (references only). Emitting there keeps seq stamping in the one loop that records the stream. The SDK deep-copies tool outputs, so the subclass's constructor takes only the text.
+- API: `GET /api/sessions/{id}/artifacts`, `GET /api/artifacts/{id}` (with version list), `GET /api/artifacts/{id}/versions/{v}` (with content).
+- Frontend: the reducer turns each artifact event into an `ArtifactPart`; its card shows the version that message made, so history stays faithful after updates. The side panel lists the session's artifacts and shows the selected one at its latest version, with a version picker. The open artifact is in the hash (`#<session>/<artifact>`). Lists are invalidated on artifact events; versions are cached forever.
+- Rendering: `VegaChart` is lazy-loaded (vega is its own ~800 kB chunk), with `actions: false`, vega's expression interpreter (`ast: true`, no `new Function`) and a loader that refuses every URL; SVG renderer, `width: "container"` for single and layered charts, vega's dark theme under `prefers-color-scheme: dark`.
+- Limit: chart data goes through the model's tool arguments (tokens, transcription errors), fine for a few hundred rows; the instructions say to aggregate first. A later "chart from a tool result by `call_id`" would remove it.
+
 ## Roadmap
 
 1. **v1a — backend**: migrations, sessions CRUD, runs as tasks with event persistence + SSE replay/tail + cancel, `run_python`, optional Langfuse, FakeModel tests. Testable with `curl`.
 2. **v1b — frontend**: generated types, SSE client + reducer, chat UI + session list, resume on reload, Playwright happy path.
 3. **Sandbox**: `Sandbox` protocol in front of the Monty code, `sandbox_stdout` events, per-session workdir.
-4. **Artifacts**: table + storage, tools to create/update, side panel UI, versions.
+4. **Artifacts** ✅: table + storage, tools to create/update, side panel UI, versions (charts first).
 5. **Human-in-the-loop**: `approval_required` event, persisted run state, approve/reject endpoint.
 6. **Multiple agents**: registry UI, handoffs.
 

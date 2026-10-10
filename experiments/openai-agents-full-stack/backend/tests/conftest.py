@@ -1,4 +1,5 @@
 import json
+import os
 from collections.abc import AsyncIterator
 from pathlib import Path
 from typing import Any
@@ -13,6 +14,8 @@ from src.events import Event, event_adapter
 from src.settings import Settings
 
 set_tracing_disabled(True)
+
+FIXTURES = Path(__file__).parent / "fixtures" / "events"
 
 
 @pytest.fixture
@@ -64,6 +67,12 @@ def parse_sse(body: str) -> list[tuple[str | None, Event]]:
     return messages
 
 
+async def new_session(http: httpx.AsyncClient) -> str:
+    response = await http.post("/api/sessions", json={})
+    assert response.status_code == 201
+    return response.json()["id"]
+
+
 async def start_run(http: httpx.AsyncClient, session_id: str, text: str) -> str:
     response = await http.post(
         f"/api/sessions/{session_id}/runs",
@@ -89,3 +98,18 @@ def shape(events: list[Event]) -> list[dict[str, Any]]:
 
 def load_fixture(path: Path) -> Any:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def check_fixture(name: str, events: list[Event]) -> None:
+    """Recorded event sequences, shared with the frontend reducer tests.
+
+    Regenerate with ``UPDATE_FIXTURES=1``.
+    """
+    recorded = shape(events)
+    path = FIXTURES / name
+    if os.environ.get("UPDATE_FIXTURES") or not path.exists():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(
+            json.dumps(recorded, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+        )
+    assert recorded == load_fixture(path)

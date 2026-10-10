@@ -138,7 +138,8 @@ async def test_failed_server_is_skipped(
     await stream(client, await start_run(client, await new_session(client), "hi"))
 
     tools = {tool.name for tool in model.calls[0].tools}
-    assert tools == {"run_python", "mcp_test__add", "mcp_test__fail"}
+    assert {"mcp_test__add", "mcp_test__fail", "run_python"} <= tools
+    assert not any(name.startswith("mcp_broken__") for name in tools)
 
 
 async def test_mcp_servers_are_listed(client: httpx.AsyncClient) -> None:

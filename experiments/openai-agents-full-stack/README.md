@@ -61,7 +61,9 @@ is `http://host.docker.internal:<port>/v1` from inside the container, not `local
 
 The UI lists chats on the left (rename, delete); the selected chat is in the URL hash, so a
 reload reopens it and resumes a run still in progress. The first message of a new chat creates
-it. Tool calls show as cards with their arguments and result; Stop cancels the run.
+it. Tool calls show as cards with their arguments and result; Stop cancels the run. Charts the
+agent makes (`create_chart`, `update_chart`) show in their message at the version that message
+made, and in the artifacts panel on the right, where every version can be reopened.
 
 Or drive the API directly:
 
@@ -86,10 +88,13 @@ curl -XPOST localhost:8000/api/runs/$R/cancel      # stop a running run
 | `POST` | `/api/sessions/{id}/runs` | Start a run → `201 {run_id}`; `409` if one is running |
 | `GET` | `/api/runs/{id}/events?after=` | SSE: replay after `seq`, then live tail; honours `Last-Event-ID` |
 | `POST` | `/api/runs/{id}/cancel` | Cancel → `202`; `409` if not running |
+| `GET` | `/api/sessions/{id}/artifacts` | The session's artifacts, newest first |
+| `GET` | `/api/artifacts/{id}` | An artifact and its versions (no content) |
+| `GET` | `/api/artifacts/{id}/versions/{v}` | One version with its content |
 
 Every SSE message has `id: <seq>` and `data:` one event of the union in
 `backend/src/events.py`: `run_started`, `user_message`, `text_delta`, `tool_call`,
-`tool_result`, `agent_changed`, `run_finished`, `error`. The union (and the `Part` union from
+`tool_result`, `artifact_created`, `artifact_updated`, `agent_changed`, `run_finished`, `error`. The union (and the `Part` union from
 `parts.py`) is published in `/openapi.json`; `make gen-types` turns it into
 `frontend/src/api/schema.gen.ts`, and `make check` fails if that file is stale.
 
@@ -99,13 +104,14 @@ Every SSE message has `id: <seq>` and `data:` one event of the union in
 | --- | --- |
 | `Dockerfile`, `compose.yaml` | Single image (frontend build + backend), run with `backend/.env` and a data volume |
 | `backend/src/events.py` | Stream event union: the API contract |
-| `backend/src/parts.py` | Message part union (`TextPart`, `ToolPart`) |
+| `backend/src/parts.py` | Message part union (`TextPart`, `ToolPart`, `ArtifactPart`) |
 | `backend/src/settings.py` | Config from env and `backend/.env` |
 | `backend/src/app.py` | App factory, lifespan, static frontend |
-| `backend/src/api/` | Routers (sessions, runs, MCP servers) and the OpenAPI contract patch |
-| `backend/src/agents/` | Agent registry + factories, `run_python` (Monty) tool, MCP server config, tool error marking |
+| `backend/src/api/` | Routers (sessions, runs, artifacts, MCP servers) and the OpenAPI contract patch |
+| `backend/src/agents/` | Agent registry + factories, `run_python` (Monty) and chart tools, MCP server config, tool error marking |
+| `backend/src/artifacts/` | Artifact models, chart spec validation, vendored Vega-Lite JSON schema, `ArtifactOutput` |
 | `backend/mcp.json` | MCP servers for the agent (gitignored; see `mcp.example.json`) |
-| `backend/src/runs/` | Run service (task, persistence, cancel, timeout), SDK → event mapping, live fan-out, SDK sessions |
+| `backend/src/runs/` | Run service (task, persistence, cancel, timeout), run context for tools, SDK → event mapping, live fan-out, SDK sessions |
 | `backend/src/store/` | SQLite connection, migration runner, `migrations/*.sql`, repository |
 | `backend/tests/` | Scripted-model fakes, store / mapping / API + SSE tests, recorded event fixtures |
 | `backend/tests/mcp_test_server.py` | Tiny stdio MCP server for the MCP tests |
@@ -113,7 +119,7 @@ Every SSE message has `id: <seq>` and `data:` one event of the union in
 | `backend/data/app.db` | App data and SDK history (gitignored) |
 | `frontend/src/api/` | Generated types (`schema.gen.ts`), typed REST client, SSE reader, query keys |
 | `frontend/src/chat/` | Events → parts reducer, session run state, `useChat` (history + live tail) |
-| `frontend/src/components/` | Chat view, composer, per-part renderers (markdown, tool card), session list, MCP servers panel |
+| `frontend/src/components/` | Chat view, composer, per-part renderers (markdown, tool card, artifact card), lazy Vega chart, artifacts panel, session list, MCP servers panel |
 | `frontend/src/components/ui/` | shadcn/ui components (added with `pnpm dlx shadcn add …`) |
 | `frontend/e2e/` | Playwright happy path |
 

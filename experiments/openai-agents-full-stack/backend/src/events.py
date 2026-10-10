@@ -12,6 +12,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
 
+from src.artifacts.models import ArtifactKind
 from src.parts import InputPart
 
 EVENT_VERSION = 1
@@ -75,6 +76,26 @@ class ToolResult(_Envelope):
     is_error: bool = False
 
 
+class ArtifactCreated(_Envelope):
+    """A tool created an artifact. A reference only: the content is fetched."""
+
+    type: Literal["artifact_created"] = "artifact_created"
+    artifact_id: str
+    kind: ArtifactKind
+    title: str
+    version: int
+
+
+class ArtifactUpdated(_Envelope):
+    """A tool saved a new version of an artifact."""
+
+    type: Literal["artifact_updated"] = "artifact_updated"
+    artifact_id: str
+    kind: ArtifactKind
+    title: str
+    version: int
+
+
 class AgentChanged(_Envelope):
     type: Literal["agent_changed"] = "agent_changed"
     agent: str
@@ -98,6 +119,8 @@ type Event = Annotated[
     | TextDelta
     | ToolCall
     | ToolResult
+    | ArtifactCreated
+    | ArtifactUpdated
     | AgentChanged
     | RunFinished
     | Error,

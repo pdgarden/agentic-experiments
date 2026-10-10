@@ -12,10 +12,12 @@ from agents import Agent, Model, ModelSettings, OpenAIChatCompletionsModel
 from agents.mcp import MCPServer
 from openai import AsyncOpenAI
 
+from src.agents.artifact_tools import create_chart, update_chart
 from src.agents.python_tool import run_python
+from src.runs.context import RunContext
 from src.settings import Settings
 
-type AgentFactory = Callable[[Model, list[MCPServer]], Agent[None]]
+type AgentFactory = Callable[[Model, list[MCPServer]], Agent[RunContext]]
 
 DEFAULT_AGENT = "assistant"
 
@@ -23,17 +25,23 @@ DEFAULT_AGENT = "assistant"
 _MODEL_SETTINGS = ModelSettings(include_usage=True)
 
 
-def _assistant(model: Model, mcp_servers: list[MCPServer]) -> Agent[None]:
-    return Agent(
+def _assistant(model: Model, mcp_servers: list[MCPServer]) -> Agent[RunContext]:
+    return Agent[RunContext](
         name="assistant",
         instructions=(
             "You are a helpful assistant. Use the run_python tool for any"
             " computation or data manipulation instead of doing it in your head."
             " Use the other tools you have when they fit the request."
+            "\n\nTo show data visually, call create_chart with a Vega-Lite spec"
+            " whose data is inline in data.values (no URLs). Aggregate first and"
+            " keep it under about 500 rows. The chart is shown to the user, so do"
+            " not repeat its data in your answer. To revise a chart (another mark,"
+            " colors, fields), call update_chart on the same artifact id rather"
+            " than creating a new one."
         ),
         model=model,
         model_settings=_MODEL_SETTINGS,
-        tools=[run_python],
+        tools=[run_python, create_chart, update_chart],
         mcp_servers=mcp_servers,
         # MCP tools are named mcp_<server>__<tool>: no clashes between servers,
         # and the tool card shows where a call went.
@@ -48,7 +56,7 @@ AGENTS: dict[str, AgentFactory] = {
 
 def build_agent(
     name: str, model: Model, mcp_servers: list[MCPServer] | None = None
-) -> Agent[None]:
+) -> Agent[RunContext]:
     """The named agent, or the default one if that name is no longer registered.
 
     ``mcp_servers`` are already connected; agents share them across runs.

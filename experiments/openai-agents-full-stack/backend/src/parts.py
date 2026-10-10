@@ -8,6 +8,8 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field
 
+from src.artifacts.models import ArtifactKind
+
 
 class TextPart(BaseModel):
     type: Literal["text"] = "text"
@@ -25,7 +27,17 @@ class ToolPart(BaseModel):
     result: str | None = None
 
 
-type Part = Annotated[TextPart | ToolPart, Field(discriminator="type")]
+class ArtifactPart(BaseModel):
+    """An artifact version a tool wrote in this message; its content is fetched."""
+
+    type: Literal["artifact"] = "artifact"
+    artifact_id: str
+    kind: ArtifactKind
+    title: str
+    version: int
+
+
+type Part = Annotated[TextPart | ToolPart | ArtifactPart, Field(discriminator="type")]
 
 # What a user can send. Only text for now; files etc. join this union later.
 type InputPart = TextPart

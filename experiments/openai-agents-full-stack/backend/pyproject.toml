@@ -6,6 +6,7 @@ requires-python = ">=3.12"
 dependencies = [
     "aiosqlite>=0.22.1",
     "fastapi>=0.142.2",
+    "jsonschema>=4.26.0",
     "langfuse>=4.17.0",
     "openai-agents>=0.23.1",
     "openinference-instrumentation-openai-agents>=2.5.2",
@@ -31,6 +32,7 @@ dev = [
     "pytest-asyncio>=1.4.0",
     "pytest-cov>=7.1.0",
     "ruff>=0.16.10",
+    "types-jsonschema>=4.26.0.20261006",
 ]
 
 [tool.pytest.ini_options]

@@ -125,6 +125,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/sessions/{session_id}/artifacts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Session Artifacts
+         * @description The session's artifacts, newest first, without content.
+         */
+        get: operations["list_session_artifacts_api_sessions__session_id__artifacts_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/artifacts/{artifact_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Artifact
+         * @description The artifact and its versions, oldest first, without content.
+         */
+        get: operations["get_artifact_api_artifacts__artifact_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/artifacts/{artifact_id}/versions/{version}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Artifact Version
+         * @description One version with its content. Versions never change once written.
+         */
+        get: operations["get_artifact_version_api_artifacts__artifact_id__versions__version__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -155,6 +215,156 @@ export interface components {
             /** Agent */
             agent: string;
         };
+        ArtifactContent: components["schemas"]["ChartContent"];
+        /**
+         * ArtifactCreated
+         * @description A tool created an artifact. A reference only: the content is fetched.
+         */
+        ArtifactCreated: {
+            /**
+             * V
+             * @default 1
+             * @constant
+             */
+            v: 1;
+            /**
+             * Run Id
+             * @default
+             */
+            run_id: string;
+            /**
+             * Seq
+             * @default 0
+             */
+            seq: number;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "artifact_created";
+            /** Artifact Id */
+            artifact_id: string;
+            kind: components["schemas"]["ArtifactKind"];
+            /** Title */
+            title: string;
+            /** Version */
+            version: number;
+        };
+        /** ArtifactDetail */
+        ArtifactDetail: {
+            /** Id */
+            id: string;
+            /** Session Id */
+            session_id: string;
+            kind: components["schemas"]["ArtifactKind"];
+            /** Title */
+            title: string;
+            /** Latest Version */
+            latest_version: number;
+            /** Created At */
+            created_at: string;
+            /** Updated At */
+            updated_at: string;
+            /** Versions */
+            versions: components["schemas"]["ArtifactVersionInfo"][];
+        };
+        /** @constant */
+        ArtifactKind: "chart";
+        /** ArtifactRecord */
+        ArtifactRecord: {
+            /** Id */
+            id: string;
+            /** Session Id */
+            session_id: string;
+            kind: components["schemas"]["ArtifactKind"];
+            /** Title */
+            title: string;
+            /** Latest Version */
+            latest_version: number;
+            /** Created At */
+            created_at: string;
+            /** Updated At */
+            updated_at: string;
+        };
+        /**
+         * ArtifactUpdated
+         * @description A tool saved a new version of an artifact.
+         */
+        ArtifactUpdated: {
+            /**
+             * V
+             * @default 1
+             * @constant
+             */
+            v: 1;
+            /**
+             * Run Id
+             * @default
+             */
+            run_id: string;
+            /**
+             * Seq
+             * @default 0
+             */
+            seq: number;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "artifact_updated";
+            /** Artifact Id */
+            artifact_id: string;
+            kind: components["schemas"]["ArtifactKind"];
+            /** Title */
+            title: string;
+            /** Version */
+            version: number;
+        };
+        /**
+         * ArtifactVersionInfo
+         * @description A version without its content, for listing.
+         */
+        ArtifactVersionInfo: {
+            /** Artifact Id */
+            artifact_id: string;
+            /** Version */
+            version: number;
+            /** Run Id */
+            run_id: string;
+            /** Title */
+            title: string;
+            /** Created At */
+            created_at: string;
+        };
+        /** ArtifactVersionRecord */
+        ArtifactVersionRecord: {
+            /** Artifact Id */
+            artifact_id: string;
+            /** Version */
+            version: number;
+            /** Run Id */
+            run_id: string;
+            /** Title */
+            title: string;
+            /** Created At */
+            created_at: string;
+            content: components["schemas"]["ArtifactContent"];
+        };
+        /**
+         * ChartContent
+         * @description A Vega-Lite spec with inline data, validated by ``src.artifacts.chart``.
+         */
+        ChartContent: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "chart";
+            /** Spec */
+            spec: {
+                [key: string]: unknown;
+            };
+        };
         /** Error */
         Error: {
             /**
@@ -184,7 +394,7 @@ export interface components {
         };
         /** @enum {string} */
         ErrorCode: "max_turns" | "guardrail" | "timeout" | "model_error" | "internal";
-        Event: components["schemas"]["RunStarted"] | components["schemas"]["UserMessage"] | components["schemas"]["TextDelta"] | components["schemas"]["ToolCall"] | components["schemas"]["ToolResult"] | components["schemas"]["AgentChanged"] | components["schemas"]["RunFinished"] | components["schemas"]["Error"];
+        Event: components["schemas"]["RunStarted"] | components["schemas"]["UserMessage"] | components["schemas"]["TextDelta"] | components["schemas"]["ToolCall"] | components["schemas"]["ToolResult"] | components["schemas"]["ArtifactCreated"] | components["schemas"]["ArtifactUpdated"] | components["schemas"]["AgentChanged"] | components["schemas"]["RunFinished"] | components["schemas"]["Error"];
         /** @enum {string} */
         FinalRunStatus: "succeeded" | "failed" | "cancelled" | "interrupted";
         /** HTTPValidationError */
@@ -508,6 +718,24 @@ export interface components {
             /** Context */
             ctx?: Record<string, never>;
         };
+        /**
+         * ArtifactPart
+         * @description An artifact version a tool wrote in this message; its content is fetched.
+         */
+        ArtifactPart: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "artifact";
+            /** Artifact Id */
+            artifact_id: string;
+            kind: components["schemas"]["ArtifactKind"];
+            /** Title */
+            title: string;
+            /** Version */
+            version: number;
+        };
         /** TextPart */
         TextPart: {
             /**
@@ -545,7 +773,7 @@ export interface components {
              */
             result: string | null;
         };
-        Part: components["schemas"]["TextPart"] | components["schemas"]["ToolPart"];
+        Part: components["schemas"]["TextPart"] | components["schemas"]["ToolPart"] | components["schemas"]["ArtifactPart"];
     };
     responses: never;
     parameters: never;
@@ -834,6 +1062,100 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["McpServerInfo"][];
+                };
+            };
+        };
+    };
+    list_session_artifacts_api_sessions__session_id__artifacts_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArtifactRecord"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_artifact_api_artifacts__artifact_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                artifact_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArtifactDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_artifact_version_api_artifacts__artifact_id__versions__version__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version: number;
+                artifact_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArtifactVersionRecord"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

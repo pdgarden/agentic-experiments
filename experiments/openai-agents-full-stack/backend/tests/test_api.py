@@ -1,23 +1,13 @@
 import asyncio
 import json
-import os
-from pathlib import Path
 
 import httpx
 from agents.testing import ModelStep, ScriptedModel
 
-from src.events import Error, Event, RunFinished, TextDelta, ToolResult
+from src.events import Error, RunFinished, TextDelta, ToolResult
 from src.settings import Settings
-from tests.conftest import load_fixture, parse_sse, shape, start_run, stream
+from tests.conftest import check_fixture, new_session, parse_sse, start_run, stream
 from tests.fakes import USAGE, blocked, call, say
-
-FIXTURES = Path(__file__).parent / "fixtures" / "events"
-
-
-async def new_session(http: httpx.AsyncClient) -> str:
-    response = await http.post("/api/sessions", json={})
-    assert response.status_code == 201
-    return response.json()["id"]
 
 
 async def wait_until_running(model: ScriptedModel) -> None:
@@ -64,22 +54,7 @@ async def test_run_with_tool_call(
     assert run["usage"]["requests"] == 2
     assert len(run["events"]) == len(events)
 
-    _check_fixture("tool_roundtrip.json", events)
-
-
-def _check_fixture(name: str, events: list[Event]) -> None:
-    """Recorded event sequences, shared with the frontend reducer tests.
-
-    Regenerate with ``UPDATE_FIXTURES=1``.
-    """
-    recorded = shape(events)
-    path = FIXTURES / name
-    if os.environ.get("UPDATE_FIXTURES") or not path.exists():
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(
-            json.dumps(recorded, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
-        )
-    assert recorded == load_fixture(path)
+    check_fixture("tool_roundtrip.json", events)
 
 
 async def test_history_carries_over_to_next_run(

@@ -1,0 +1,88 @@
+[
+  {
+    "v": 1,
+    "seq": 1,
+    "type": "run_started",
+    "agent": "assistant"
+  },
+  {
+    "v": 1,
+    "seq": 2,
+    "type": "user_message",
+    "parts": [
+      {
+        "type": "text",
+        "text": "Plot it"
+      }
+    ]
+  },
+  {
+    "v": 1,
+    "seq": 3,
+    "type": "tool_call",
+    "call_id": "call_1",
+    "name": "create_chart",
+    "args": "{\"title\":\"LeBron points\",\"spec\":\"{\\\"$schema\\\": \\\"https://vega.github.io/schema/vega-lite/v5.json\\\", \\\"data\\\": {\\\"values\\\": [{\\\"season\\\": 2000, \\\"pts\\\": 20}, {\\\"season\\\": 2001, \\\"pts\\\": 21}, {\\\"season\\\": 2002, \\\"pts\\\": 22}]}, \\\"mark\\\": \\\"bar\\\", \\\"encoding\\\": {\\\"x\\\": {\\\"field\\\": \\\"season\\\", \\\"type\\\": \\\"ordinal\\\"}, \\\"y\\\": {\\\"field\\\": \\\"pts\\\", \\\"type\\\": \\\"quantitative\\\"}}}\"}"
+  },
+  {
+    "v": 1,
+    "seq": 4,
+    "type": "tool_result",
+    "call_id": "call_1",
+    "result": "Created chart artifact 00000000000000000000000000000003 (v1): LeBron points. It is shown to the user.",
+    "is_error": false
+  },
+  {
+    "v": 1,
+    "seq": 5,
+    "type": "artifact_created",
+    "artifact_id": "00000000000000000000000000000003",
+    "kind": "chart",
+    "title": "LeBron points",
+    "version": 1
+  },
+  {
+    "v": 1,
+    "seq": 6,
+    "type": "tool_call",
+    "call_id": "call_2",
+    "name": "update_chart",
+    "args": "{\"artifact_id\":\"00000000000000000000000000000003\",\"spec\":\"{\\\"$schema\\\": \\\"https://vega.github.io/schema/vega-lite/v5.json\\\", \\\"data\\\": {\\\"values\\\": [{\\\"season\\\": 2000, \\\"pts\\\": 20}, {\\\"season\\\": 2001, \\\"pts\\\": 21}, {\\\"season\\\": 2002, \\\"pts\\\": 22}]}, \\\"mark\\\": \\\"line\\\", \\\"encoding\\\": {\\\"x\\\": {\\\"field\\\": \\\"season\\\", \\\"type\\\": \\\"ordinal\\\"}, \\\"y\\\": {\\\"field\\\": \\\"pts\\\", \\\"type\\\": \\\"quantitative\\\"}}}\",\"title\":\"LeBron points (line)\"}"
+  },
+  {
+    "v": 1,
+    "seq": 7,
+    "type": "tool_result",
+    "call_id": "call_2",
+    "result": "Updated chart artifact 00000000000000000000000000000003 (v2): LeBron points (line). It is shown to the user.",
+    "is_error": false
+  },
+  {
+    "v": 1,
+    "seq": 8,
+    "type": "artifact_updated",
+    "artifact_id": "00000000000000000000000000000003",
+    "kind": "chart",
+    "title": "LeBron points (line)",
+    "version": 2
+  },
+  {
+    "v": 1,
+    "seq": 9,
+    "type": "text_delta",
+    "segment_id": "s1",
+    "delta": "Here it is, as a line chart."
+  },
+  {
+    "v": 1,
+    "seq": 10,
+    "type": "run_finished",
+    "status": "succeeded",
+    "usage": {
+      "requests": 3,
+      "input_tokens": 30,
+      "output_tokens": 15,
+      "total_tokens": 45
+    }
+  }
+]

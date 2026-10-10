@@ -1,6 +1,6 @@
 # openai-agents-full-stack
 
-Full-stack chat app around an openai-agents SDK agent. `PLAN.md` is the design (contract, data model, roadmap); `README.md` has setup, run commands and the file layout. v1a (backend) and v1b (frontend, in `frontend/`) are done.
+Full-stack chat app around an openai-agents SDK agent. `PLAN.md` is the design (contract, data model, roadmap); `README.md` has setup, run commands and the file layout. v1a (backend), v1b (frontend, in `frontend/`), MCP servers and chart artifacts are done.
 
 - Backend: Python 3.12+, managed with uv. Run backend commands from `backend/` (`uv sync`, `uv run …`), or use the `Makefile` targets from this folder.
 - Imports are absolute from the `src` package (`from src.events import …`); relative imports are banned by ruff. `src/agents/` is our package; the SDK is the top-level `agents`.
@@ -17,4 +17,6 @@ Full-stack chat app around an openai-agents SDK agent. `PLAN.md` is the design (
 - A new part type gets a renderer in `frontend/src/components/MessageParts.tsx`; unknown types render nothing. Markdown from the model is untrusted: keep `rehype-sanitize` and never allow raw HTML.
 - shadcn/ui components live in `frontend/src/components/ui/`; `cn` is in `src/utils.ts` (not `src/lib/`, which the repo's root `.gitignore` ignores). After `shadcn add`, check that its imports use `@/utils` and that it added no stray packages.
 - Before finishing a change, run `make check` (backend and frontend). Run `make e2e` after UI or stream changes.
+- Artifacts (`src/artifacts/`): content is validated server-side before it is stored; tools return `ArtifactOutput` and `mapping.py` emits the `artifact_*` events, never the tool itself. Chart specs must use inline data (`data.values`): any `url` key is rejected, and the frontend's vega loader refuses every URL too.
+- `src/artifacts/vega-lite.v6.schema.json` is vendored from `frontend/node_modules/vega-lite/build/vega-lite-schema.json` (minified): refresh it when the `vega-lite` version changes. `VegaChart` stays lazy-loaded, with `ast: true` + `expressionInterpreter`.
 - Docker: `make docker` builds `Dockerfile` (Node stage for `frontend/dist`, then the backend with `uv sync --frozen --no-dev`) and runs it via `compose.yaml` with `backend/.env`. Both lockfiles must be current; new runtime files outside `backend/src` or `frontend/` need a `COPY`.

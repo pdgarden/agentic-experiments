@@ -1,7 +1,15 @@
 // Thin typed client over the REST routes; paths and bodies come from /openapi.json.
 import createClient from "openapi-fetch";
 import type { paths } from "@/api/schema.gen";
-import type { InputPart, McpServerInfo, SessionDetail, SessionRecord } from "@/api/types";
+import type {
+  ArtifactDetail,
+  ArtifactRecord,
+  ArtifactVersionRecord,
+  InputPart,
+  McpServerInfo,
+  SessionDetail,
+  SessionRecord,
+} from "@/api/types";
 
 export const http = createClient<paths>({ baseUrl: "" });
 
@@ -67,6 +75,27 @@ export const api = {
         body: { parts },
       }),
     ).run_id,
+
+  listArtifacts: async (sessionId: string): Promise<ArtifactRecord[]> =>
+    unwrap(
+      await http.GET("/api/sessions/{session_id}/artifacts", {
+        params: { path: { session_id: sessionId } },
+      }),
+    ),
+
+  getArtifact: async (artifactId: string): Promise<ArtifactDetail> =>
+    unwrap(
+      await http.GET("/api/artifacts/{artifact_id}", {
+        params: { path: { artifact_id: artifactId } },
+      }),
+    ),
+
+  getArtifactVersion: async (artifactId: string, version: number): Promise<ArtifactVersionRecord> =>
+    unwrap(
+      await http.GET("/api/artifacts/{artifact_id}/versions/{version}", {
+        params: { path: { artifact_id: artifactId, version } },
+      }),
+    ),
 
   listMcpServers: async (): Promise<McpServerInfo[]> => unwrap(await http.GET("/api/mcp-servers")),
 

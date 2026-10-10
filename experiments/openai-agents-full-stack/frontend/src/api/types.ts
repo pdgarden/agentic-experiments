@@ -16,6 +16,11 @@ export type SessionRecord = Schemas["SessionRecord"];
 export type SessionDetail = Schemas["SessionDetail"];
 export type RunWithEvents = Schemas["RunWithEvents"];
 export type McpServerInfo = Schemas["McpServerInfo"];
+export type ArtifactPart = Schemas["ArtifactPart"];
+export type ArtifactRecord = Schemas["ArtifactRecord"];
+export type ArtifactDetail = Schemas["ArtifactDetail"];
+export type ArtifactVersionRecord = Schemas["ArtifactVersionRecord"];
+export type ChartContent = Schemas["ChartContent"];
 
 /** The event of a given `type`, e.g. `EventOf<"text_delta">`. */
 export type EventOf<T extends EventType> = Extract<Event, { type: T }>;
