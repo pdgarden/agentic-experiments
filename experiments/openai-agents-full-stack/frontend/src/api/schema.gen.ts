@@ -105,6 +105,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/mcp-servers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Mcp Servers
+         * @description Every server in ``mcp.json``, as connected at startup, with its tools.
+         */
+        get: operations["list_mcp_servers_api_mcp_servers_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -182,6 +202,34 @@ export interface components {
             type: "text";
             /** Text */
             text: string;
+        };
+        /**
+         * McpServerInfo
+         * @description A configured server as the UI lists it.
+         */
+        McpServerInfo: {
+            /** Name */
+            name: string;
+            type: components["schemas"]["McpServerKind"];
+            status: components["schemas"]["McpServerStatus"];
+            /**
+             * Tools
+             * @default []
+             */
+            tools: components["schemas"]["McpToolInfo"][];
+            /** Error */
+            error?: string | null;
+        };
+        /** @enum {string} */
+        McpServerKind: "stdio" | "http";
+        /** @enum {string} */
+        McpServerStatus: "connected" | "failed" | "disabled";
+        /** McpToolInfo */
+        McpToolInfo: {
+            /** Name */
+            name: string;
+            /** Description */
+            description?: string | null;
         };
         /** RunCreate */
         RunCreate: {
@@ -766,6 +814,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_mcp_servers_api_mcp_servers_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["McpServerInfo"][];
                 };
             };
         };

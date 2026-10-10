@@ -4,6 +4,7 @@ import { type FormEvent, useState } from "react";
 import { api } from "@/api/client";
 import { queryKeys, sessionsQuery } from "@/api/queries";
 import type { SessionRecord } from "@/api/types";
+import { McpServers } from "@/components/McpServers";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -102,6 +103,7 @@ export function SessionList({ selectedId, onSelect }: SessionListProps) {
           ),
         )}
       </nav>
+      <McpServers />
       <AlertDialog open={deleting !== null} onOpenChange={(open) => !open && setDeleting(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>

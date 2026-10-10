@@ -1,7 +1,7 @@
 // Thin typed client over the REST routes; paths and bodies come from /openapi.json.
 import createClient from "openapi-fetch";
 import type { paths } from "@/api/schema.gen";
-import type { InputPart, SessionDetail, SessionRecord } from "@/api/types";
+import type { InputPart, McpServerInfo, SessionDetail, SessionRecord } from "@/api/types";
 
 export const http = createClient<paths>({ baseUrl: "" });
 
@@ -67,6 +67,8 @@ export const api = {
         body: { parts },
       }),
     ).run_id,
+
+  listMcpServers: async (): Promise<McpServerInfo[]> => unwrap(await http.GET("/api/mcp-servers")),
 
   cancelRun: async (runId: string): Promise<void> => {
     unwrap(

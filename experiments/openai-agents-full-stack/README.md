@@ -34,6 +34,8 @@ cp backend/mcp.example.json backend/mcp.json   # then edit; restart the backend 
   stay out of the JSON. An unset variable or an invalid file stops the backend at startup.
 - Servers connect once, at startup; one that fails is logged and skipped, and the app runs
   without it.
+- The sidebar's **MCP servers** panel (`GET /api/mcp-servers`) lists every configured server as
+  connected (with its tools), failed (with the error) or disabled.
 - Tools are named `mcp_<server>__<tool>` and show as tool cards like `run_python`; a result the
   server flags as an error shows as a failed card.
 - In Docker, the image has no `uvx` / `npx`, so only HTTP servers work, and `mcp.json` must be
@@ -100,7 +102,7 @@ Every SSE message has `id: <seq>` and `data:` one event of the union in
 | `backend/src/parts.py` | Message part union (`TextPart`, `ToolPart`) |
 | `backend/src/settings.py` | Config from env and `backend/.env` |
 | `backend/src/app.py` | App factory, lifespan, static frontend |
-| `backend/src/api/` | Routers (sessions, runs) and the OpenAPI contract patch |
+| `backend/src/api/` | Routers (sessions, runs, MCP servers) and the OpenAPI contract patch |
 | `backend/src/agents/` | Agent registry + factories, `run_python` (Monty) tool, MCP server config, tool error marking |
 | `backend/mcp.json` | MCP servers for the agent (gitignored; see `mcp.example.json`) |
 | `backend/src/runs/` | Run service (task, persistence, cancel, timeout), SDK → event mapping, live fan-out, SDK sessions |
@@ -111,7 +113,7 @@ Every SSE message has `id: <seq>` and `data:` one event of the union in
 | `backend/data/app.db` | App data and SDK history (gitignored) |
 | `frontend/src/api/` | Generated types (`schema.gen.ts`), typed REST client, SSE reader, query keys |
 | `frontend/src/chat/` | Events → parts reducer, session run state, `useChat` (history + live tail) |
-| `frontend/src/components/` | Chat view, composer, per-part renderers (markdown, tool card), session list |
+| `frontend/src/components/` | Chat view, composer, per-part renderers (markdown, tool card), session list, MCP servers panel |
 | `frontend/src/components/ui/` | shadcn/ui components (added with `pnpm dlx shadcn add …`) |
 | `frontend/e2e/` | Playwright happy path |
 

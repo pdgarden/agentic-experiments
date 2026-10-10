@@ -185,8 +185,9 @@ Events are the only source of UI history; there is no `messages` table. The fron
 
 ## MCP notes (as built)
 
-- Config: `backend/mcp.json` (`mcpServers`, stdio or Streamable HTTP), parsed in `src/agents/mcp_servers.py`; `${VAR}` expanded from the environment and `backend/.env`. No UI, table or contract change.
+- Config: `backend/mcp.json` (`mcpServers`, stdio or Streamable HTTP), parsed in `src/agents/mcp_servers.py`; `${VAR}` expanded from the environment and `backend/.env`. No table or stream-contract change.
 - Lifecycle: `MCPServerManager` in the app lifespan connects the servers once (in parallel), drops failed ones with a warning, and every run's agent shares the connected ones. Runs stop before servers disconnect.
+- Listing: `connected_mcp_servers` yields `McpServers` (`active` for the agent, `info` for the UI). `info` is a startup snapshot of every configured server (connected with its tools, failed with the error, or disabled), served by `GET /api/mcp-servers` and shown in the sidebar's MCP servers panel. With `cache_tools_list`, the listed tools are the ones the agent gets.
 - Tool names are prefixed (`mcp_config={"include_server_in_tool_names": True}` → `mcp_<server>__<tool>`), so servers cannot clash.
 - The SDK passes an MCP result with `isError` to the model as plain output; our server subclasses raise instead, so `failure_error_function=tool_error` marks it `ToolErrorText` and the UI flags it.
 - MCP tool outputs are `{"type": "text" | "image", ...}` items, not strings; `mapping.py` renders them as text.

@@ -14,7 +14,7 @@ from fastapi.staticfiles import StaticFiles
 from src.agents.mcp_servers import connected_mcp_servers
 from src.agents.python_tool import close_sandbox
 from src.agents.registry import build_model
-from src.api import runs, sessions
+from src.api import mcp, runs, sessions
 from src.api.contract import install_contract
 from src.api.deps import Services
 from src.observability import setup_observability
@@ -51,10 +51,13 @@ def create_app(settings: Settings | None = None, model: Model | None = None) -> 
                     sdk_sessions,
                     model or build_model(settings),
                     settings,
-                    mcp_servers,
+                    mcp_servers.active,
                 )
                 app.state.services = Services(
-                    store=store, runs=run_service, sdk_sessions=sdk_sessions
+                    store=store,
+                    runs=run_service,
+                    sdk_sessions=sdk_sessions,
+                    mcp_servers=mcp_servers.info,
                 )
                 try:
                     yield
@@ -70,6 +73,7 @@ def create_app(settings: Settings | None = None, model: Model | None = None) -> 
     api = APIRouter(prefix="/api")
     api.include_router(sessions.router)
     api.include_router(runs.router)
+    api.include_router(mcp.router)
     app.include_router(api)
     install_contract(app)
 

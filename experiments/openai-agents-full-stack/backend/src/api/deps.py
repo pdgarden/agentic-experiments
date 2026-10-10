@@ -5,6 +5,7 @@ from typing import Annotated, cast
 
 from fastapi import Depends, HTTPException, Request
 
+from src.agents.mcp_servers import McpServerInfo
 from src.runs.sdk_sessions import SdkSessions
 from src.runs.service import RunService
 from src.store.repo import SessionRecord, Store
@@ -15,6 +16,7 @@ class Services:
     store: Store
     runs: RunService
     sdk_sessions: SdkSessions
+    mcp_servers: list[McpServerInfo]
 
 
 def get_services(request: Request) -> Services:

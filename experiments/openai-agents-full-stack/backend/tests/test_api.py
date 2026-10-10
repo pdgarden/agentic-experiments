@@ -225,6 +225,12 @@ async def test_session_endpoints(client: httpx.AsyncClient) -> None:
     ).status_code == 404
 
 
+async def test_no_mcp_config_lists_no_servers(client: httpx.AsyncClient) -> None:
+    response = await client.get("/api/mcp-servers")
+    assert response.status_code == 200
+    assert response.json() == []
+
+
 async def test_delete_stops_running_run(
     client: httpx.AsyncClient, model: ScriptedModel
 ) -> None:

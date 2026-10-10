@@ -12,6 +12,7 @@ import os
 import re
 from collections.abc import AsyncGenerator, Mapping
 from contextlib import asynccontextmanager
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Annotated, Any, Literal
 
@@ -130,6 +131,33 @@ def _expand_all(
     return {key: _expand(value, env, f"{where}.{key}") for key, value in values.items()}
 
 
+type McpServerKind = Literal["stdio", "http"]
+type McpServerStatus = Literal["connected", "failed", "disabled"]
+
+
+class McpToolInfo(BaseModel):
+    name: str  # as the server names it; the agent sees ``mcp_<server>__<name>``
+    description: str | None = None
+
+
+class McpServerInfo(BaseModel):
+    """A configured server as the UI lists it."""
+
+    name: str
+    type: McpServerKind
+    status: McpServerStatus
+    tools: list[McpToolInfo] = []
+    error: str | None = None
+
+
+@dataclass(frozen=True)
+class McpServers:
+    """The connected servers, for the agent, and every configured one, for the UI."""
+
+    active: list[MCPServer] = field(default_factory=list[MCPServer])
+    info: list[McpServerInfo] = field(default_factory=list[McpServerInfo])
+
+
 def load_mcp_config(path: Path) -> McpConfig:
     """The parsed file; an empty config if it does not exist."""
     if not path.exists():
@@ -183,24 +211,73 @@ def _environment() -> dict[str, str]:
     return env | dict(os.environ)
 
 
+def _describe(error: BaseException) -> str:
+    return str(error) or type(error).__name__
+
+
+async def _connected_info(server: MCPServer, kind: McpServerKind) -> McpServerInfo:
+    """The server and its tools, which ``cache_tools_list`` keeps for the agent."""
+    try:
+        tools = await server.list_tools()
+    except Exception as error:
+        logger.warning("MCP server %r: listing tools failed: %s", server.name, error)
+        return McpServerInfo(
+            name=server.name, type=kind, status="connected", error=_describe(error)
+        )
+    return McpServerInfo(
+        name=server.name,
+        type=kind,
+        status="connected",
+        tools=[McpToolInfo(name=t.name, description=t.description) for t in tools],
+    )
+
+
 @asynccontextmanager
-async def connected_mcp_servers(settings: Settings) -> AsyncGenerator[list[MCPServer]]:
+async def connected_mcp_servers(settings: Settings) -> AsyncGenerator[McpServers]:
     """The configured servers that connected; the rest are logged and skipped.
 
+    ``info`` lists every configured server, tools included, for the UI.
     A broken config file raises ``McpConfigError``: better to fail at startup
     than to run with tools silently missing.
     """
     config = load_mcp_config(settings.mcp_config_path)
     servers = build_mcp_servers(config, _environment(), settings.mcp_timeout_s)
     if not servers:
-        yield []
+        yield McpServers(info=_info(config, {}, {}))
         return
     async with MCPServerManager(
         servers, drop_failed_servers=True, connect_in_parallel=True
     ) as manager:
-        for server, error in manager.errors.items():
-            logger.warning("MCP server %r skipped: %s", server.name, error)
+        failed = {server.name: _describe(e) for server, e in manager.errors.items()}
+        for name, error in failed.items():
+            logger.warning("MCP server %r skipped: %s", name, error)
         active = manager.active_servers
         if active:
             logger.info("MCP servers connected: %s", ", ".join(s.name for s in active))
-        yield active
+        kinds: dict[str, McpServerKind] = {
+            name: entry.type for name, entry in config.mcpServers.items()
+        }
+        connected = {
+            server.name: await _connected_info(server, kinds[server.name])
+            for server in active
+        }
+        yield McpServers(active=active, info=_info(config, connected, failed))
+
+
+def _info(
+    config: McpConfig, connected: dict[str, McpServerInfo], failed: dict[str, str]
+) -> list[McpServerInfo]:
+    """Every configured server, in file order."""
+    info: list[McpServerInfo] = []
+    for name, entry in config.mcpServers.items():
+        if name in connected:
+            info.append(connected[name])
+        elif not entry.enabled:
+            info.append(McpServerInfo(name=name, type=entry.type, status="disabled"))
+        else:
+            # Not connected and no error recorded still means the agent lacks it.
+            error = failed.get(name, "did not connect")
+            info.append(
+                McpServerInfo(name=name, type=entry.type, status="failed", error=error)
+            )
+    return info

@@ -95,12 +95,13 @@ def test_invalid_file_names_the_path(tmp_path: Path, content: str) -> None:
 
 @pytest.fixture
 def settings(settings: Settings) -> Settings:
-    """The test server, plus one that cannot start, before the app does."""
+    """The test server, one that cannot start and a disabled one."""
     write_config(
         settings.mcp_config_path,
         {
             "test": {"command": sys.executable, "args": [str(TEST_SERVER)]},
             "broken": {"command": "/nonexistent/mcp-server"},
+            "off": {"url": "https://example.com/mcp", "enabled": False},
         },
     )
     return settings
@@ -138,3 +139,25 @@ async def test_failed_server_is_skipped(
 
     tools = {tool.name for tool in model.calls[0].tools}
     assert tools == {"run_python", "mcp_test__add", "mcp_test__fail"}
+
+
+async def test_mcp_servers_are_listed(client: httpx.AsyncClient) -> None:
+    response = await client.get("/api/mcp-servers")
+    assert response.status_code == 200
+    test, broken, off = response.json()
+
+    assert test["name"] == "test" and test["type"] == "stdio"
+    assert test["status"] == "connected" and test["error"] is None
+    assert {t["name"]: t["description"] for t in test["tools"]} == {
+        "add": "Add two integers.",
+        "fail": "Always fails.",
+    }
+    assert broken["name"] == "broken" and broken["status"] == "failed"
+    assert broken["error"] and broken["tools"] == []
+    assert off == {
+        "name": "off",
+        "type": "http",
+        "status": "disabled",
+        "tools": [],
+        "error": None,
+    }

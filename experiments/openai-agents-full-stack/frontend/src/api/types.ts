@@ -15,6 +15,7 @@ export type RunStatus = Schemas["RunStatus"];
 export type SessionRecord = Schemas["SessionRecord"];
 export type SessionDetail = Schemas["SessionDetail"];
 export type RunWithEvents = Schemas["RunWithEvents"];
+export type McpServerInfo = Schemas["McpServerInfo"];
 
 /** The event of a given `type`, e.g. `EventOf<"text_delta">`. */
 export type EventOf<T extends EventType> = Extract<Event, { type: T }>;
