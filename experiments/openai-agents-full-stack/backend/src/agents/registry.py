@@ -9,12 +9,13 @@ a handoff is then directly the next run's agent.
 from collections.abc import Callable
 
 from agents import Agent, Model, ModelSettings, OpenAIChatCompletionsModel
+from agents.mcp import MCPServer
 from openai import AsyncOpenAI
 
 from src.agents.python_tool import run_python
 from src.settings import Settings
 
-type AgentFactory = Callable[[Model], Agent[None]]
+type AgentFactory = Callable[[Model, list[MCPServer]], Agent[None]]
 
 DEFAULT_AGENT = "assistant"
 
@@ -22,16 +23,21 @@ DEFAULT_AGENT = "assistant"
 _MODEL_SETTINGS = ModelSettings(include_usage=True)
 
 
-def _assistant(model: Model) -> Agent[None]:
+def _assistant(model: Model, mcp_servers: list[MCPServer]) -> Agent[None]:
     return Agent(
         name="assistant",
         instructions=(
             "You are a helpful assistant. Use the run_python tool for any"
             " computation or data manipulation instead of doing it in your head."
+            " Use the other tools you have when they fit the request."
         ),
         model=model,
         model_settings=_MODEL_SETTINGS,
         tools=[run_python],
+        mcp_servers=mcp_servers,
+        # MCP tools are named mcp_<server>__<tool>: no clashes between servers,
+        # and the tool card shows where a call went.
+        mcp_config={"include_server_in_tool_names": True},
     )
 
 
@@ -40,10 +46,15 @@ AGENTS: dict[str, AgentFactory] = {
 }
 
 
-def build_agent(name: str, model: Model) -> Agent[None]:
-    """The named agent, or the default one if that name is no longer registered."""
+def build_agent(
+    name: str, model: Model, mcp_servers: list[MCPServer] | None = None
+) -> Agent[None]:
+    """The named agent, or the default one if that name is no longer registered.
+
+    ``mcp_servers`` are already connected; agents share them across runs.
+    """
     factory = AGENTS.get(name, AGENTS[DEFAULT_AGENT])
-    return factory(model)
+    return factory(model, mcp_servers or [])
 
 
 def build_model(settings: Settings) -> Model:

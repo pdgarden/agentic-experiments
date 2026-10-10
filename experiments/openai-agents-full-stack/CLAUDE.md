@@ -7,6 +7,7 @@ Full-stack chat app around an openai-agents SDK agent. `PLAN.md` is the design (
 - `events.py` is the API contract. Change it deliberately: the frontend types are generated from `/openapi.json`, and `tests/fixtures/events/` must be re-recorded (`make fixtures`).
 - SDK stream types are handled only in `src/runs/mapping.py`; they never reach the API.
 - Schema changes are new numbered files in `src/store/migrations/`; never edit an applied one, never touch the SDK's `agent_sessions` / `agent_messages` tables.
+- MCP servers come from the gitignored `backend/mcp.json` (`src/agents/mcp_servers.py`) and connect once in the app lifespan. Tests use `tests/mcp_test_server.py`, never real servers; the `settings` fixture points `mcp_config_path` at an absent file.
 - Tests use `agents.testing.ScriptedModel` (helpers in `tests/fakes.py`), never a real model.
 - `backend/.env` and `backend/data/` are gitignored.
 - Frontend: Vite + React + TypeScript strict, pnpm 11 (pinned via `packageManager`; pnpm 12 does not run under this corepack). Run frontend commands from `frontend/` (`pnpm …`). Imports use the `@/` alias for `src/`.

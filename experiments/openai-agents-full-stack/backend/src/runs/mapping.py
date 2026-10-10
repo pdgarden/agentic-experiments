@@ -58,7 +58,7 @@ class EventMapper:
             return [
                 ToolResult(
                     call_id=item.call_id or "",
-                    result=str(output),
+                    result=_output_text(output),
                     is_error=isinstance(output, ToolErrorText),
                 )
             ]
@@ -80,6 +80,23 @@ def _field(raw: object, name: str) -> object:
 def _call_id(raw: object) -> str:
     value = _field(raw, "call_id") or _field(raw, "id")
     return str(value) if value is not None else ""
+
+
+def _output_text(output: object) -> str:
+    """A tool output as text. Function tools return strings; MCP tools return
+    ``{"type": "text" | "image", ...}`` items, alone or in a list.
+    """
+    if isinstance(output, str):
+        return output
+    if isinstance(output, list):
+        items = cast("list[object]", output)
+        return "\n".join(_output_text(item) for item in items)
+    kind = _field(output, "type")
+    if kind == "text":
+        return str(_field(output, "text") or "")
+    if kind == "image":
+        return "[image]"
+    return str(output)
 
 
 def _arguments(raw: object) -> str:

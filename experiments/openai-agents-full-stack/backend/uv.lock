@@ -842,6 +842,7 @@ dependencies = [
     { name = "openinference-instrumentation-openai-agents" },
     { name = "pydantic-monty" },
     { name = "pydantic-settings" },
+    { name = "python-dotenv" },
     { name = "uvicorn" },
 ]
 
@@ -864,6 +865,7 @@ requires-dist = [
     { name = "openinference-instrumentation-openai-agents", specifier = ">=2.5.2" },
     { name = "pydantic-monty", specifier = ">=1.0.0" },
     { name = "pydantic-settings", specifier = ">=2.15.0" },
+    { name = "python-dotenv", specifier = ">=1.2.4" },
     { name = "uvicorn", specifier = ">=0.54.0" },
 ]
 

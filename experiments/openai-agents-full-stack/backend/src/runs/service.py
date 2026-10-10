@@ -18,6 +18,7 @@ from agents import (
     Runner,
     RunResultStreaming,
 )
+from agents.mcp import MCPServer
 
 from src.agents.registry import build_agent
 from src.events import (
@@ -102,8 +103,10 @@ class RunService:
         sdk_sessions: SdkSessions,
         model: Model,
         settings: Settings,
+        mcp_servers: list[MCPServer] | None = None,
     ) -> None:
         self._store = store
+        self._mcp_servers = mcp_servers or []
         self._sdk_sessions = sdk_sessions
         self._model = model
         self._settings = settings
@@ -178,7 +181,7 @@ class RunService:
         self, live: LiveRun, session: SessionRecord, run: RunRecord
     ) -> None:
         recorder = _Recorder(self._store, live)
-        agent = build_agent(session.current_agent, self._model)
+        agent = build_agent(session.current_agent, self._model, self._mcp_servers)
         mapper = EventMapper(agent.name)
         status: FinalRunStatus = "failed"
         usage: Usage | None = None

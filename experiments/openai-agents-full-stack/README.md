@@ -19,6 +19,26 @@ cp backend/.env.example backend/.env   # then fill in MODEL_ID, OPENAI_BASE_URL,
 
 Langfuse tracing is enabled only when `LANGFUSE_PUBLIC_KEY` and `LANGFUSE_SECRET_KEY` are set.
 
+### MCP servers (optional)
+
+The agent can use tools from [MCP](https://modelcontextprotocol.io) servers listed in
+`backend/mcp.json` (gitignored), in the usual `mcpServers` shape:
+
+```bash
+cp backend/mcp.example.json backend/mcp.json   # then edit; restart the backend to reload it
+```
+
+- An entry with `command` (+ `args`, `env`, `cwd`) is a stdio server; one with `url` (+ `headers`)
+  is a Streamable HTTP server. `"enabled": false` skips an entry.
+- `${VAR}` in `env` and `headers` values is read from the environment or `backend/.env`, so tokens
+  stay out of the JSON. An unset variable or an invalid file stops the backend at startup.
+- Servers connect once, at startup; one that fails is logged and skipped, and the app runs
+  without it.
+- Tools are named `mcp_<server>__<tool>` and show as tool cards like `run_python`; a result the
+  server flags as an error shows as a failed card.
+- In Docker, the image has no `uvx` / `npx`, so only HTTP servers work, and `mcp.json` must be
+  mounted (e.g. `./backend/mcp.json:/app/backend/mcp.json:ro` in `compose.yaml`).
+
 ## Run
 
 ```bash
@@ -81,10 +101,12 @@ Every SSE message has `id: <seq>` and `data:` one event of the union in
 | `backend/src/settings.py` | Config from env and `backend/.env` |
 | `backend/src/app.py` | App factory, lifespan, static frontend |
 | `backend/src/api/` | Routers (sessions, runs) and the OpenAPI contract patch |
-| `backend/src/agents/` | Agent registry + factories, `run_python` (Monty) tool, tool error marking |
+| `backend/src/agents/` | Agent registry + factories, `run_python` (Monty) tool, MCP server config, tool error marking |
+| `backend/mcp.json` | MCP servers for the agent (gitignored; see `mcp.example.json`) |
 | `backend/src/runs/` | Run service (task, persistence, cancel, timeout), SDK → event mapping, live fan-out, SDK sessions |
 | `backend/src/store/` | SQLite connection, migration runner, `migrations/*.sql`, repository |
 | `backend/tests/` | Scripted-model fakes, store / mapping / API + SSE tests, recorded event fixtures |
+| `backend/tests/mcp_test_server.py` | Tiny stdio MCP server for the MCP tests |
 | `backend/tests/e2e_app.py` | The app with a scripted model, for the Playwright test |
 | `backend/data/app.db` | App data and SDK history (gitignored) |
 | `frontend/src/api/` | Generated types (`schema.gen.ts`), typed REST client, SSE reader, query keys |

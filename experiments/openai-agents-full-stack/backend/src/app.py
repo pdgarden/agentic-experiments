@@ -11,6 +11,7 @@ from agents import Model
 from fastapi import APIRouter, FastAPI
 from fastapi.staticfiles import StaticFiles
 
+from src.agents.mcp_servers import connected_mcp_servers
 from src.agents.python_tool import close_sandbox
 from src.agents.registry import build_model
 from src.api import runs, sessions
@@ -43,16 +44,24 @@ def create_app(settings: Settings | None = None, model: Model | None = None) -> 
         if model is None:
             setup_observability(settings)
         sdk_sessions = SdkSessions(settings.db_path)
-        run_service = RunService(
-            store, sdk_sessions, model or build_model(settings), settings
-        )
-        app.state.services = Services(
-            store=store, runs=run_service, sdk_sessions=sdk_sessions
-        )
         try:
-            yield
+            async with connected_mcp_servers(settings) as mcp_servers:
+                run_service = RunService(
+                    store,
+                    sdk_sessions,
+                    model or build_model(settings),
+                    settings,
+                    mcp_servers,
+                )
+                app.state.services = Services(
+                    store=store, runs=run_service, sdk_sessions=sdk_sessions
+                )
+                try:
+                    yield
+                finally:
+                    # Runs stop before their MCP servers disconnect.
+                    await run_service.shutdown()
         finally:
-            await run_service.shutdown()
             await sdk_sessions.close()
             await close_sandbox()
             await conn.close()

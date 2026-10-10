@@ -9,6 +9,7 @@ it serves ``frontend/dist`` like ``make run``.
 
 import asyncio
 import json
+from pathlib import Path
 from typing import Any, cast
 
 from agents import set_tracing_disabled
@@ -42,6 +43,10 @@ async def _reply(model_call: ModelCall) -> ModelStep:
 
 
 def create_e2e_app() -> FastAPI:
-    settings = Settings(_env_file=None, model_id="scripted")  # pyright: ignore[reportCallIssue]
+    settings = Settings(
+        _env_file=None,  # pyright: ignore[reportCallIssue]
+        model_id="scripted",
+        mcp_config_path=Path("/nonexistent/mcp.json"),  # no MCP servers
+    )
     model = ScriptedModel([ModelStep.respond(_reply) for _ in range(_TURNS)])
     return create_app(settings, model=model)

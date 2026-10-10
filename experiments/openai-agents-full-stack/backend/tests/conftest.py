@@ -21,6 +21,7 @@ def settings(tmp_path: Path) -> Settings:
         _env_file=None,  # pyright: ignore[reportCallIssue]
         db_path=tmp_path / "app.db",
         frontend_dist=tmp_path / "no-frontend",
+        mcp_config_path=tmp_path / "mcp.json",  # absent: no MCP servers
         model_id="scripted",
         run_timeout_s=5,
     )

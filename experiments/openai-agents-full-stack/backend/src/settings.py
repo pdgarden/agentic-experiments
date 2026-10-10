@@ -25,6 +25,10 @@ class Settings(BaseSettings):
     max_turns: int = 10
     run_timeout_s: float = 300.0
 
+    # MCP servers; a missing file means none.
+    mcp_config_path: Path = BACKEND_DIR / "mcp.json"
+    mcp_timeout_s: float = 30.0
+
     # Tracing is enabled only when both keys are set.
     langfuse_public_key: str | None = None
     langfuse_secret_key: SecretStr | None = None

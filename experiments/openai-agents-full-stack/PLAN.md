@@ -183,6 +183,15 @@ Events are the only source of UI history; there is no `messages` table. The fron
 - Backend fix found by the e2e test: store reads iterated their cursor across awaits on the shared connection, so an event insert interleaved with a read failed with "database is locked" after the SDK session's connection committed (a stale WAL snapshot; `busy_timeout` does not help). Reads now fetch in one step (`Store._rows`); `test_reads_do_not_hold_a_snapshot_across_awaits` covers it.
 - E2E: `backend/tests/e2e_app.py` builds the app with a scripted model (tool call, then the tool's output as the answer; "slowly" delays the answer so a test can reload mid-run). Playwright starts it on a temp DB, serving `frontend/dist`.
 
+## MCP notes (as built)
+
+- Config: `backend/mcp.json` (`mcpServers`, stdio or Streamable HTTP), parsed in `src/agents/mcp_servers.py`; `${VAR}` expanded from the environment and `backend/.env`. No UI, table or contract change.
+- Lifecycle: `MCPServerManager` in the app lifespan connects the servers once (in parallel), drops failed ones with a warning, and every run's agent shares the connected ones. Runs stop before servers disconnect.
+- Tool names are prefixed (`mcp_config={"include_server_in_tool_names": True}` → `mcp_<server>__<tool>`), so servers cannot clash.
+- The SDK passes an MCP result with `isError` to the model as plain output; our server subclasses raise instead, so `failure_error_function=tool_error` marks it `ToolErrorText` and the UI flags it.
+- MCP tool outputs are `{"type": "text" | "image", ...}` items, not strings; `mapping.py` renders them as text.
+- Tests run `tests/mcp_test_server.py` over stdio; `conftest.py` points `mcp_config_path` at an absent file so a real `mcp.json` never leaks into tests.
+
 ## Roadmap
 
 1. **v1a — backend**: migrations, sessions CRUD, runs as tasks with event persistence + SSE replay/tail + cancel, `run_python`, optional Langfuse, FakeModel tests. Testable with `curl`.
