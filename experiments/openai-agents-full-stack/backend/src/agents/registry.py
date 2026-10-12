@@ -29,15 +29,7 @@ def _assistant(model: Model, mcp_servers: list[MCPServer]) -> Agent[RunContext]:
     return Agent[RunContext](
         name="assistant",
         instructions=(
-            "You are a helpful assistant. Use the run_python tool for any"
-            " computation or data manipulation instead of doing it in your head."
-            " Use the other tools you have when they fit the request."
-            "\n\nTo show data visually, call create_chart with a Vega-Lite spec"
-            " whose data is inline in data.values (no URLs). Aggregate first and"
-            " keep it under about 500 rows. The chart is shown to the user, so do"
-            " not repeat its data in your answer. To revise a chart (another mark,"
-            " colors, fields), call update_chart on the same artifact id rather"
-            " than creating a new one."
+            "You are a helpful assistant."
         ),
         model=model,
         model_settings=_MODEL_SETTINGS,
