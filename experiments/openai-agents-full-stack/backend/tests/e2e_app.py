@@ -3,7 +3,8 @@
 No network, no real LLM: every message makes the model call ``run_python`` with
 ``6 * 7``, then answer with the tool's output. A message containing "slowly"
 holds the answer for a moment, to test resuming a run after a reload; one
-containing "chart" calls ``create_chart`` instead. Run with
+containing "chart" calls ``create_chart`` instead ("wide chart": one asking for
+more width than the chat has). Run with
 ``DB_PATH=<tmp>/app.db uv run uvicorn tests.e2e_app:create_e2e_app --factory``;
 it serves ``frontend/dist`` like ``make run``.
 """
@@ -56,7 +57,9 @@ async def _reply(model_call: ModelCall) -> ModelStep:
         return say(f"The tool said: {json.dumps(str(last.get('output', '')))}")
     call_id = f"call_{len(items)}"
     if "chart" in json.dumps(last):
-        args = {"title": "Points per game", "spec": json.dumps(_CHART_SPEC)}
+        wide = "wide chart" in json.dumps(last)
+        spec = {**_CHART_SPEC, "width": 1200} if wide else _CHART_SPEC
+        args = {"title": "Points per game", "spec": json.dumps(spec)}
         return call("create_chart", args, call_id=call_id)
     return call("run_python", {"code": "6 * 7"}, call_id=call_id)
 

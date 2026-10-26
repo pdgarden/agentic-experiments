@@ -100,3 +100,45 @@ test("a chart is drawn in its message and opens in the artifacts panel", async (
   await page.getByRole("button", { name: "Artifacts (1)" }).click();
   await expect(panel).toBeVisible();
 });
+
+test("a chart asking for more width than the chat has stays inside its card", async ({ page }) => {
+  await page.goto("/");
+  await page.getByLabel("Message").fill(unique("Show a wide chart"));
+  await page.getByLabel("Message").press("Enter");
+
+  const card = page.getByTestId("run").first().getByTestId("artifact-card");
+  await expect(card.locator("svg .mark-rect path")).toHaveCount(3);
+  const cardBox = await card.boundingBox();
+  const svgBox = await card.getByTestId("vega-chart").locator("svg").boundingBox();
+  expect(svgBox && cardBox && svgBox.x + svgBox.width).toBeLessThanOrEqual(
+    (cardBox?.x ?? 0) + (cardBox?.width ?? 0),
+  );
+});
+
+test("the chat follows a run to the bottom, and stays where the user scrolled up to", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1200, height: 500 });
+  await page.goto("/");
+  const scroller = page.getByTestId("chat-scroller");
+  const distanceToBottom = () =>
+    scroller.evaluate((element) => element.scrollHeight - element.scrollTop - element.clientHeight);
+
+  // The chart draws after the run's last event: the chat still ends at the bottom.
+  await page.getByLabel("Message").fill(unique("Show a chart"));
+  await page.getByLabel("Message").press("Enter");
+  await expect(page.locator("svg .mark-rect path")).toHaveCount(3);
+  await expect.poll(distanceToBottom).toBeLessThan(2);
+
+  // Scrolling up during a run is not undone by what the run writes next.
+  await page.getByLabel("Message").fill(unique("Count slowly"));
+  await page.getByLabel("Message").press("Enter");
+  const run = page.getByTestId("run").nth(1);
+  await expect(run.getByTestId("tool-card")).toHaveAttribute("data-status", "ok");
+  await expect(run).toHaveAttribute("data-status", "running");
+  await scroller.hover();
+  await page.mouse.wheel(0, -200);
+  await expect.poll(distanceToBottom).toBeGreaterThan(100);
+  await expect(run).toHaveAttribute("data-status", "succeeded", { timeout: 10_000 });
+  expect(await distanceToBottom()).toBeGreaterThan(100);
+});

@@ -29,11 +29,13 @@ function useDarkMode(): boolean {
   );
 }
 
-/** Single and layered charts fill their container; compound ones keep their own sizes. */
-function fitted(spec: Record<string, unknown>): VisualizationSpec {
-  const single = "mark" in spec || "layer" in spec;
-  const sized = single && spec.width === undefined ? { width: "container", ...spec } : spec;
-  return sized as VisualizationSpec;
+/** Single and layered charts fill their container's width; compound ones keep their own sizes. */
+export function fitted(spec: Record<string, unknown>): VisualizationSpec {
+  if (!("mark" in spec || "layer" in spec)) return spec as VisualizationSpec;
+  // A fixed width would overflow the card, and a "container" height has nothing to measure.
+  const { width: _width, height, ...rest } = spec;
+  const kept = height === undefined || height === "container" ? {} : { height };
+  return { ...rest, ...kept, width: "container" } as VisualizationSpec;
 }
 
 export function VegaChart({ spec }: { spec: Record<string, unknown> }) {
@@ -71,7 +73,8 @@ export function VegaChart({ spec }: { spec: Record<string, unknown> }) {
 
   return (
     <div className="w-full">
-      <div ref={container} className="w-full" data-testid="vega-chart" />
+      {/* Compound charts can be wider than the card: they scroll inside it. */}
+      <div ref={container} className="w-full overflow-x-auto" data-testid="vega-chart" />
       {error && (
         <p role="alert" className="text-xs text-destructive">
           Could not draw this chart: {error}

@@ -7,7 +7,7 @@ import { api } from "@/api/client";
 import type { ArtifactDetail, ArtifactRecord, ArtifactVersionRecord } from "@/api/types";
 import { ArtifactCard } from "@/components/ArtifactCard";
 import { ArtifactPanel, ArtifactsToggle } from "@/components/ArtifactPanel";
-import { blockedLoader } from "@/components/VegaChart";
+import { blockedLoader, fitted } from "@/components/VegaChart";
 
 vi.mock("@/api/client", () => ({
   api: { listArtifacts: vi.fn(), getArtifact: vi.fn(), getArtifactVersion: vi.fn() },
@@ -161,5 +161,23 @@ describe("VegaChart loader", () => {
       "Charts cannot load",
     );
     await expect(blockedLoader.sanitize("https://x", { context: "href" })).rejects.toThrow();
+  });
+});
+
+describe("VegaChart sizing", () => {
+  const mark = { mark: "bar", data: { values: [] } };
+
+  it("fits single and layered charts to the container, whatever width they ask for", () => {
+    expect(fitted({ ...mark, width: 1200, height: 300 })).toEqual({
+      ...mark,
+      width: "container",
+      height: 300,
+    });
+    expect(fitted({ layer: [], height: "container" })).toEqual({ layer: [], width: "container" });
+  });
+
+  it("leaves compound charts at their own sizes", () => {
+    const spec = { hconcat: [mark, mark], width: 400 };
+    expect(fitted(spec)).toBe(spec);
   });
 });

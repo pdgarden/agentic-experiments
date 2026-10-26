@@ -56,25 +56,44 @@ interface ChatLayoutProps {
 
 function ChatLayout({ runs, composer, notice, empty }: ChatLayoutProps) {
   const scroller = useRef<HTMLDivElement>(null);
+  const content = useRef<HTMLDivElement>(null);
   const pinned = useRef(true);
+  const lastTop = useRef(0);
 
-  // Follow the stream while the user is at the bottom; leave them alone once they scroll up.
+  // Follow whatever grows the chat (tokens, a chart drawing, a tool card opening) while the
+  // user is at the bottom; leave them alone once they scroll up.
   useLayoutEffect(() => {
     const element = scroller.current;
-    if (element && pinned.current) element.scrollTop = element.scrollHeight;
-  });
+    if (!element || !content.current) return;
+    const follow = () => {
+      if (pinned.current) element.scrollTop = element.scrollHeight;
+    };
+    follow();
+    const observer = new ResizeObserver(follow);
+    observer.observe(content.current);
+    observer.observe(element); // the composer growing shrinks the scroller
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <div className="flex h-full min-w-0 flex-1 flex-col">
       <div
         ref={scroller}
         className="flex-1 overflow-y-auto"
+        data-testid="chat-scroller"
+        // A wheel up is intent, even when a token lands in the same frame and hides the move.
+        onWheel={(event) => {
+          if (event.deltaY < 0) pinned.current = false;
+        }}
         onScroll={(event) => {
           const element = event.currentTarget;
-          pinned.current = element.scrollHeight - element.scrollTop - element.clientHeight < 80;
+          const atBottom = element.scrollHeight - element.scrollTop - element.clientHeight < 2;
+          if (atBottom) pinned.current = true;
+          else if (element.scrollTop < lastTop.current) pinned.current = false;
+          lastTop.current = element.scrollTop;
         }}
       >
-        <div className="mx-auto max-w-3xl space-y-8 px-4 py-8">
+        <div ref={content} className="mx-auto max-w-3xl space-y-8 px-4 py-8">
           {runs.length === 0 && empty}
           {runs.map((run) => (
             <RunMessages key={run.id} run={run} />
