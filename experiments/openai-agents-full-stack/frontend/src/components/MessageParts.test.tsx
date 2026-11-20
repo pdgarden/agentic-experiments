@@ -18,6 +18,38 @@ describe("MessageParts", () => {
     expect(container.querySelector("code.language-python .hljs-number")).not.toBeNull();
   });
 
+  it("renders inline and display math with KaTeX", () => {
+    const { container } = render(
+      <MessageParts
+        runActive={false}
+        parts={[
+          text("Inline $$x^2$$ and \\(y\\).\n\n$$\n\\text{Score} = 1.5 \\times a\n$$\n\n\\[z\\]"),
+        ]}
+      />,
+    );
+    expect(container.querySelectorAll(".katex").length).toBe(4);
+    expect(container.querySelectorAll(".katex-display").length).toBe(2);
+  });
+
+  it("leaves single-dollar amounts as text", () => {
+    const { container } = render(
+      <MessageParts runActive={false} parts={[text("It costs $5 and $10.")]} />,
+    );
+    expect(container.querySelector(".katex")).toBeNull();
+    expect(container.textContent).toContain("It costs $5 and $10.");
+  });
+
+  it("keeps math in code untouched and KaTeX untrusted", () => {
+    const { container } = render(
+      <MessageParts
+        runActive={false}
+        parts={[text("`\\(a\\)` and $$\\href{javascript:alert(1)}{x}$$")]}
+      />,
+    );
+    expect(screen.getByText("\\(a\\)").tagName).toBe("CODE");
+    expect(container.querySelector("a[href^='javascript']")).toBeNull();
+  });
+
   it("does not render untrusted HTML or script links", () => {
     const { container } = render(
       <MessageParts
