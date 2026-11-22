@@ -1,0 +1,36 @@
+data: {"type":"start"}
+
+data: {"type":"data-title","data":{"title":"E2E title"},"transient":true}
+
+data: {"type":"data-model-settings-delta","data":{"settings":{"thinking":"high"},"top_level":true}}
+
+data: {"type":"start-step"}
+
+data: {"type":"reasoning-start","id":"a043eea2-29f2-4480-b959-e1e1e4e61793"}
+
+data: {"type":"reasoning-delta","id":"a043eea2-29f2-4480-b959-e1e1e4e61793","delta":"Thinking about it."}
+
+data: {"type":"reasoning-end","id":"a043eea2-29f2-4480-b959-e1e1e4e61793"}
+
+data: {"type":"text-start","id":"82bcf229-86ed-48fd-bcac-db1f9760c39a"}
+
+data: {"type":"text-delta","delta":"You ","id":"82bcf229-86ed-48fd-bcac-db1f9760c39a"}
+
+data: {"type":"text-delta","delta":"said: ","id":"82bcf229-86ed-48fd-bcac-db1f9760c39a"}
+
+data: {"type":"text-delta","delta":"Think ","id":"82bcf229-86ed-48fd-bcac-db1f9760c39a"}
+
+data: {"type":"text-delta","delta":"first ","id":"82bcf229-86ed-48fd-bcac-db1f9760c39a"}
+
+data: {"type":"text-end","id":"82bcf229-86ed-48fd-bcac-db1f9760c39a"}
+
+data: {"type":"data-conversation-saved","data":{"conversation_id":"fixture-thinking","entry_ids":["01a204b9-9a66-7759-88c1-e301cdb5253e","01a204b9-9a66-7759-88c1-e302242843e4"]},"transient":true}
+
+data: {"type":"message-metadata","messageMetadata":{"pydantic_ai":{"timestamp":"2026-11-22T19:26:42.259487Z"}}}
+
+data: {"type":"finish-step"}
+
+data: {"type":"finish"}
+
+data: [DONE]
+

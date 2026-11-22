@@ -1,0 +1,40 @@
+data: {"type":"start"}
+
+data: {"type":"data-title","data":{"title":"E2E title"},"transient":true}
+
+data: {"type":"start-step"}
+
+data: {"type":"tool-input-start","toolCallId":"pyd_ai_ae0bf5e4206f43b8819a0bb9ebe7c09d","toolName":"create_artifact"}
+
+data: {"type":"tool-input-delta","toolCallId":"pyd_ai_ae0bf5e4206f43b8819a0bb9ebe7c09d","inputTextDelta":"{\"kind\": \"chart\", \"title\": \"Wins by team\", \"content\": \"{\\\"mark\\\": \\\"bar\\\", \\\"data\\\": {\\\"values\\\": [{\\\"team\\\": \\\"A\\\", \\\"wins\\\": 3}, {\\\"team\\\": \\\"B\\\", \\\"wins\\\": 5}, {\\\"team\\\": \\\"C\\\", \\\"wins\\\": 2}]}, \\\"encoding\\\": {\\\"x\\\": {\\\"field\\\": \\\"team\\\", \\\"type\\\": \\\"nominal\\\"}, \\\"y\\\": {\\\"field\\\": \\\"wins\\\", \\\"type\\\": \\\"quantitative\\\"}}}\"}"}
+
+data: {"type":"tool-input-available","toolCallId":"pyd_ai_ae0bf5e4206f43b8819a0bb9ebe7c09d","toolName":"create_artifact","input":{"kind":"chart","title":"Wins by team","content":"{\"mark\": \"bar\", \"data\": {\"values\": [{\"team\": \"A\", \"wins\": 3}, {\"team\": \"B\", \"wins\": 5}, {\"team\": \"C\", \"wins\": 2}]}, \"encoding\": {\"x\": {\"field\": \"team\", \"type\": \"nominal\"}, \"y\": {\"field\": \"wins\", \"type\": \"quantitative\"}}}"}}
+
+data: {"type":"data-artifact","data":{"artifact_id":"6c879556dbbf46e59a0ed97ee21b5f48","version":1,"kind":"chart","title":"Wins by team","created":true},"transient":true}
+
+data: {"type":"tool-output-available","toolCallId":"pyd_ai_ae0bf5e4206f43b8819a0bb9ebe7c09d","output":{"artifact_id":"6c879556dbbf46e59a0ed97ee21b5f48","version":1,"kind":"chart","title":"Wins by team","note":"Shown to the user in this message and in the artifacts panel; do not repeat its content."}}
+
+data: {"type":"finish-step"}
+
+data: {"type":"start-step"}
+
+data: {"type":"text-start","id":"0bc8655a-cb47-4cf0-bce2-884aadd13ad8"}
+
+data: {"type":"text-delta","delta":"Here ","id":"0bc8655a-cb47-4cf0-bce2-884aadd13ad8"}
+
+data: {"type":"text-delta","delta":"it ","id":"0bc8655a-cb47-4cf0-bce2-884aadd13ad8"}
+
+data: {"type":"text-delta","delta":"is. ","id":"0bc8655a-cb47-4cf0-bce2-884aadd13ad8"}
+
+data: {"type":"text-end","id":"0bc8655a-cb47-4cf0-bce2-884aadd13ad8"}
+
+data: {"type":"data-conversation-saved","data":{"conversation_id":"fixture-chart","entry_ids":["01a204b9-9c58-7602-93b1-930df59f572f","01a204b9-9c58-7602-93b1-930e1970cddf","01a204b9-9c58-7602-93b1-930fa28b8c80","01a204b9-9c58-7602-93b1-93103b9d24fb"]},"transient":true}
+
+data: {"type":"message-metadata","messageMetadata":{"pydantic_ai":{"timestamp":"2026-11-22T19:26:42.756409Z"}}}
+
+data: {"type":"finish-step"}
+
+data: {"type":"finish"}
+
+data: [DONE]
+

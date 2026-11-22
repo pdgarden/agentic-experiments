@@ -1,0 +1,34 @@
+{
+  "default_model": "claude-sonnet",
+  "utility_model": "gpt-mini",
+  "models": [
+    {
+      "id": "claude-sonnet",
+      "label": "Claude Sonnet",
+      "litellm_name": "anthropic/claude-sonnet-4-6",
+      "thinking": true,
+      "context_window": 200000
+    },
+    {
+      "id": "gemini-pro",
+      "label": "Gemini Pro",
+      "litellm_name": "gemini/gemini-3-pro-preview",
+      "thinking": true,
+      "context_window": 1000000
+    },
+    {
+      "id": "gpt",
+      "label": "GPT",
+      "litellm_name": "gpt-5.2",
+      "thinking": true,
+      "context_window": 400000
+    },
+    {
+      "id": "gpt-mini",
+      "label": "GPT mini",
+      "litellm_name": "gpt-5-mini",
+      "thinking": false,
+      "context_window": 400000
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+data: {"type":"start"}
+
+data: {"type":"data-title","data":{"title":"E2E title"},"transient":true}
+
+data: {"type":"start-step"}
+
+data: {"type":"tool-input-start","toolCallId":"pyd_ai_88c62a5e480c4d1c87dccc72f1c86c70","toolName":"run_code","providerMetadata":{"pydantic_ai":{"tool_kind":"code_mode.run_code"}}}
+
+data: {"type":"tool-input-delta","toolCallId":"pyd_ai_88c62a5e480c4d1c87dccc72f1c86c70","inputTextDelta":"{\"code\": \"sum(range(10))\"}"}
+
+data: {"type":"tool-input-available","toolCallId":"pyd_ai_88c62a5e480c4d1c87dccc72f1c86c70","toolName":"run_code","input":{"code":"sum(range(10))"},"providerMetadata":{"pydantic_ai":{"tool_kind":"code_mode.run_code"}}}
+
+data: {"type":"tool-output-available","toolCallId":"pyd_ai_88c62a5e480c4d1c87dccc72f1c86c70","output":45}
+
+data: {"type":"finish-step"}
+
+data: {"type":"start-step"}
+
+data: {"type":"text-start","id":"f3030474-363b-4d16-963f-f879161cd2ef"}
+
+data: {"type":"text-delta","delta":"The ","id":"f3030474-363b-4d16-963f-f879161cd2ef"}
+
+data: {"type":"text-delta","delta":"result ","id":"f3030474-363b-4d16-963f-f879161cd2ef"}
+
+data: {"type":"text-delta","delta":"is ","id":"f3030474-363b-4d16-963f-f879161cd2ef"}
+
+data: {"type":"text-delta","delta":"45. ","id":"f3030474-363b-4d16-963f-f879161cd2ef"}
+
+data: {"type":"text-end","id":"f3030474-363b-4d16-963f-f879161cd2ef"}
+
+data: {"type":"data-conversation-saved","data":{"conversation_id":"fixture-code","entry_ids":["01a204b9-9ceb-7793-b529-b4ac96a546e2","01a204b9-9ceb-7793-b529-b4ad7bac44eb","01a204b9-9ceb-7793-b529-b4ae88d6bf10","01a204b9-9ceb-7793-b529-b4afa9f92b0d"]},"transient":true}
+
+data: {"type":"message-metadata","messageMetadata":{"pydantic_ai":{"timestamp":"2026-11-22T19:26:42.900397Z"}}}
+
+data: {"type":"finish-step"}
+
+data: {"type":"finish"}
+
+data: [DONE]
+

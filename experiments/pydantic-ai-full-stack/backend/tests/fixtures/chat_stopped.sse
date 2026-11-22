@@ -1,0 +1,24 @@
+data: {"type":"start"}
+
+data: {"type":"data-title","data":{"title":"E2E title"},"transient":true}
+
+data: {"type":"start-step"}
+
+data: {"type":"text-start","id":"b19eaa7e-ac2d-4715-b5f2-48fbd44a3b07"}
+
+data: {"type":"text-delta","delta":"You ","id":"b19eaa7e-ac2d-4715-b5f2-48fbd44a3b07"}
+
+data: {"type":"text-delta","delta":"said: ","id":"b19eaa7e-ac2d-4715-b5f2-48fbd44a3b07"}
+
+data: {"type":"text-delta","delta":"slow ","id":"b19eaa7e-ac2d-4715-b5f2-48fbd44a3b07"}
+
+data: {"type":"text-end","id":"b19eaa7e-ac2d-4715-b5f2-48fbd44a3b07"}
+
+data: {"type":"data-run-stopped","data":{"conversation_id":"fixture-stopped"},"transient":true}
+
+data: {"type":"abort","reason":"The agent run was cancelled."}
+
+data: {"type":"finish-step"}
+
+data: [DONE]
+

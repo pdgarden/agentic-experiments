@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "nba": {
+      "command": "uv",
+      "args": ["--directory", "/path/to/nba-insights-engine", "run", "app/mcp_server.py"],
+      "description": "NBA stats"
+    },
+    "remote_example": {
+      "url": "https://example.com/mcp",
+      "headers": { "Authorization": "Bearer ${EXAMPLE_MCP_TOKEN}" },
+      "enabled": false
+    }
+  }
+}

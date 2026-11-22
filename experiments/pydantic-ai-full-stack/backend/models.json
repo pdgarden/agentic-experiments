@@ -1,0 +1,27 @@
+{
+  "default_model": "gemini-flash",
+  "utility_model": "gemini-flash",
+  "models": [
+    {
+      "id": "gemini-flash",
+      "label": "Gemini Flash",
+      "litellm_name": "vertex_ai/gemini-3.8-flash",
+      "thinking": true,
+      "context_window": 1000000
+    },
+    {
+      "id": "claude-haiku",
+      "label": "Claude Haiku",
+      "litellm_name": "bedrock/converse/eu.anthropic.claude-haiku-5-5",
+      "thinking": true,
+      "context_window": 1000000
+    },
+    {
+      "id": "deepseek-flash",
+      "label": "DeepSeek Flash",
+      "litellm_name": "mistral/deepseek-v4-1-flash-1017",
+      "thinking": true,
+      "context_window": 1000000
+    }
+  ]
+}

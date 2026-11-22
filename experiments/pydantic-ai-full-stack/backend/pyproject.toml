@@ -1,0 +1,54 @@
+[project]
+name = "pydantic-ai-full-stack"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "aiosqlite>=0.22.1",
+    "fastapi>=0.165.0",
+    "jsonschema>=4.26.0",
+    "langfuse>=5.2.0",
+    "pydantic-ai-harness[codemode]>=0.71.0",
+    "pydantic-ai-slim[litellm,mcp,openai,tavily,ui,web-fetch]>=2.71.0",
+    "pydantic-settings>=2.16.3",
+    "python-dotenv>=1.2.4",
+    "python-multipart>=0.0.20",
+    "uvicorn>=0.54.0",
+]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "pyright>=1.1.414",
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.16.10",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+
+[tool.coverage.run]
+source = ["src"]
+
+[tool.ruff]
+src = ["."]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["ARG", "E", "W", "F", "UP", "B", "SIM", "I", "Q", "TID"]
+ignore = ["B904"]
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.pyright]
+typeCheckingMode = "strict"
+reportMissingTypeStubs = false
+reportIncompatibleVariableOverride = "none"
+exclude = [".git", "**/.venv", "**/__pycache__", "**/.*", "**/node_modules"]

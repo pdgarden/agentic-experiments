@@ -1,0 +1,28 @@
+data: {"type":"start"}
+
+data: {"type":"data-title","data":{"title":"E2E title"},"transient":true}
+
+data: {"type":"start-step"}
+
+data: {"type":"text-start","id":"d2f81bb6-59ea-4ad7-af52-4ad9cf60fa63"}
+
+data: {"type":"text-delta","delta":"You ","id":"d2f81bb6-59ea-4ad7-af52-4ad9cf60fa63"}
+
+data: {"type":"text-delta","delta":"said: ","id":"d2f81bb6-59ea-4ad7-af52-4ad9cf60fa63"}
+
+data: {"type":"text-delta","delta":"Hello ","id":"d2f81bb6-59ea-4ad7-af52-4ad9cf60fa63"}
+
+data: {"type":"text-delta","delta":"there ","id":"d2f81bb6-59ea-4ad7-af52-4ad9cf60fa63"}
+
+data: {"type":"text-end","id":"d2f81bb6-59ea-4ad7-af52-4ad9cf60fa63"}
+
+data: {"type":"data-conversation-saved","data":{"conversation_id":"fixture-chat","entry_ids":["01a204b9-9a1f-76f2-9a97-bdb9526c491b","01a204b9-9a1f-76f2-9a97-bdbaa9f15f2d"]},"transient":true}
+
+data: {"type":"message-metadata","messageMetadata":{"pydantic_ai":{"timestamp":"2026-11-22T19:26:42.189282Z"}}}
+
+data: {"type":"finish-step"}
+
+data: {"type":"finish"}
+
+data: [DONE]
+

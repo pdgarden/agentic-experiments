@@ -1,0 +1,37 @@
+{
+  "messages": [
+    {
+      "id": "u1",
+      "role": "user",
+      "metadata": {
+        "pydantic_ai": {
+          "timestamp": "2026-11-22T19:26:42.074474Z"
+        }
+      },
+      "parts": [
+        {
+          "type": "text",
+          "text": "Hello there",
+          "state": "done"
+        }
+      ]
+    },
+    {
+      "id": "854fc648-51b4-4c79-816e-3bfc1517d504-1",
+      "role": "assistant",
+      "metadata": {
+        "pydantic_ai": {
+          "timestamp": "2026-11-22T19:26:42.189282Z"
+        }
+      },
+      "parts": [
+        {
+          "type": "text",
+          "text": "You said: Hello there ",
+          "state": "done"
+        }
+      ]
+    }
+  ],
+  "active_run": false
+}
