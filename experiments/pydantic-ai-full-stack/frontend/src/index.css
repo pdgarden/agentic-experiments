@@ -2,62 +2,134 @@
 @import "tw-animate-css";
 @plugin "@tailwindcss/typography";
 
-/* Follows the OS theme; shadcn's `.dark` tokens live under the media query. */
-@custom-variant dark (@media (prefers-color-scheme: dark));
+/* Theme is class-based: `.dark` on <html>, set before first paint by index.html and kept in sync by
+   `useTheme` (light / dark / system). Direction: warm neutrals tinted with the magenta accent (hue 350). */
+@custom-variant dark (&:where(.dark, .dark *));
 
+/* Surfaces, low to high: background < sidebar < card / composer < popover. */
 :root {
+  color-scheme: light;
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  --background: oklch(0.99 0.004 350);
+  --foreground: oklch(0.19 0.012 350);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --card-foreground: oklch(0.19 0.012 350);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.19 0.012 350);
+  /* The accent, L 0.58 (not 0.62) so white text on it passes AA. */
+  --primary: oklch(0.58 0.2 350);
+  --primary-foreground: oklch(0.99 0.004 350);
+  --secondary: oklch(0.96 0.007 350);
+  --secondary-foreground: oklch(0.24 0.012 350);
+  --muted: oklch(0.96 0.007 350);
+  --muted-foreground: oklch(0.52 0.014 350);
+  --accent: oklch(0.955 0.01 350);
+  --accent-foreground: oklch(0.24 0.012 350);
+  /* Tinted surfaces (user bubble, active rows, highlights). */
+  --accent-soft: oklch(0.95 0.03 350);
+  --accent-soft-foreground: oklch(0.42 0.15 350);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
+  --destructive-foreground: oklch(0.99 0 0);
+  --success: oklch(0.53 0.14 150);
+  --success-foreground: oklch(0.99 0 0);
+  --warning: oklch(0.78 0.15 75);
+  --warning-foreground: oklch(0.25 0.05 75);
+  --border: oklch(0.91 0.008 350);
+  --input: oklch(0.89 0.01 350);
+  --ring: oklch(0.58 0.2 350);
+  --sidebar: oklch(0.975 0.006 350);
+  --sidebar-foreground: oklch(0.19 0.012 350);
+  --sidebar-primary: oklch(0.58 0.2 350);
+  --sidebar-primary-foreground: oklch(0.99 0.004 350);
+  --sidebar-accent: oklch(0.945 0.012 350);
+  --sidebar-accent-foreground: oklch(0.19 0.012 350);
+  --sidebar-border: oklch(0.91 0.008 350);
+  --sidebar-ring: oklch(0.58 0.2 350);
+  /* Code blocks and highlight.js tokens (GitHub-like palette). */
+  --code-bg: oklch(0.97 0.006 350);
+  --code-fg: oklch(0.24 0.012 350);
+  --code-comment: oklch(0.53 0.015 260);
+  --code-keyword: oklch(0.55 0.2 25);
+  --code-string: oklch(0.32 0.1 255);
+  --code-number: oklch(0.5 0.17 255);
+  --code-title: oklch(0.48 0.19 300);
+  --code-deletion: oklch(0.47 0.17 25);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.922 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
+.dark {
+  color-scheme: dark;
+  --background: oklch(0.16 0.008 350);
+  --foreground: oklch(0.97 0.004 350);
+  --card: oklch(0.225 0.01 350);
+  --card-foreground: oklch(0.97 0.004 350);
+  --popover: oklch(0.25 0.011 350);
+  --popover-foreground: oklch(0.97 0.004 350);
+  --primary: oklch(0.72 0.17 350);
+  --primary-foreground: oklch(0.17 0.01 350);
+  --secondary: oklch(0.27 0.011 350);
+  --secondary-foreground: oklch(0.97 0.004 350);
+  --muted: oklch(0.27 0.011 350);
+  --muted-foreground: oklch(0.72 0.012 350);
+  --accent: oklch(0.29 0.013 350);
+  --accent-foreground: oklch(0.97 0.004 350);
+  --accent-soft: oklch(0.29 0.06 350);
+  --accent-soft-foreground: oklch(0.88 0.08 350);
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.17 0.01 350);
+  --success: oklch(0.72 0.15 150);
+  --success-foreground: oklch(0.17 0.01 350);
+  --warning: oklch(0.8 0.14 75);
+  --warning-foreground: oklch(0.22 0.04 75);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.72 0.17 350);
+  --sidebar: oklch(0.19 0.009 350);
+  --sidebar-foreground: oklch(0.97 0.004 350);
+  --sidebar-primary: oklch(0.72 0.17 350);
+  --sidebar-primary-foreground: oklch(0.17 0.01 350);
+  --sidebar-accent: oklch(0.26 0.012 350);
+  --sidebar-accent-foreground: oklch(0.97 0.004 350);
+  --sidebar-border: oklch(1 0 0 / 8%);
+  --sidebar-ring: oklch(0.72 0.17 350);
+  --code-bg: oklch(0.2 0.01 350);
+  --code-fg: oklch(0.92 0.006 350);
+  --code-comment: oklch(0.68 0.015 260);
+  --code-keyword: oklch(0.73 0.16 25);
+  --code-string: oklch(0.86 0.07 240);
+  --code-number: oklch(0.8 0.11 245);
+  --code-title: oklch(0.82 0.1 305);
+  --code-deletion: oklch(0.8 0.1 25);
+}
+
+@theme {
+  --font-sans:
+    "Inter Variable", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  --font-mono: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* A highlight sweeping across `text-shimmer` text; use it as `motion-safe:animate-shimmer`. */
+  --animate-shimmer: shimmer 2.2s linear infinite;
+  @keyframes shimmer {
+    from {
+      background-position: 150% 0;
+    }
+    to {
+      background-position: -50% 0;
+    }
   }
+}
+
+/* Muted text with a lighter band in it, for "Thinking…" labels. Static without `animate-shimmer`. */
+@utility text-shimmer {
+  background-image: linear-gradient(
+    90deg,
+    var(--muted-foreground) 35%,
+    var(--foreground) 50%,
+    var(--muted-foreground) 65%
+  );
+  background-size: 200% 100%;
+  background-position: 150% 0;
+  background-clip: text;
+  color: transparent;
 }
 
 @theme inline {
@@ -79,84 +151,174 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-soft-foreground: var(--accent-soft-foreground);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
   --color-sidebar-accent: var(--sidebar-accent);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-code: var(--code-bg);
+  --color-code-foreground: var(--code-fg);
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+  /* Every <details> summary shows the same keyboard focus ring, whatever styles it. */
+  summary:focus-visible {
+    @apply outline-2 outline-offset-2 outline-ring/70;
+  }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background font-sans text-foreground antialiased;
+    /* Inter: single-storey a-ish open digits (cv11) and the alternate punctuation set (ss01). */
+    font-feature-settings: "cv11", "ss01";
   }
 }
 
-/* highlight.js token colours (github / github-dark), scoped to code blocks. */
+/* highlight.js token colours, scoped to code blocks; the --code-* tokens switch with the theme. */
 .hljs-comment,
 .hljs-quote {
-  color: #6a737d;
+  color: var(--code-comment);
 }
 .hljs-keyword,
 .hljs-selector-tag,
 .hljs-built_in,
 .hljs-type {
-  color: #d73a49;
+  color: var(--code-keyword);
 }
 .hljs-string,
 .hljs-regexp,
 .hljs-addition {
-  color: #032f62;
+  color: var(--code-string);
 }
 .hljs-number,
 .hljs-literal,
 .hljs-variable,
 .hljs-attr {
-  color: #005cc5;
+  color: var(--code-number);
 }
 .hljs-title,
 .hljs-section,
 .hljs-function {
-  color: #6f42c1;
+  color: var(--code-title);
 }
 .hljs-deletion {
-  color: #b31d28;
+  color: var(--code-deletion);
 }
-@media (prefers-color-scheme: dark) {
-  .hljs-keyword,
-  .hljs-selector-tag,
-  .hljs-built_in,
-  .hljs-type {
-    color: #ff7b72;
+
+/* Markdown (`Markdown.tsx`): the typography plugin's colours come from the theme tokens, so it needs
+   no `prose-invert`. Unlayered, so it wins over the plugin's own rules. */
+.markdown {
+  --tw-prose-body: var(--foreground);
+  --tw-prose-headings: var(--foreground);
+  --tw-prose-lead: var(--muted-foreground);
+  --tw-prose-links: var(--primary);
+  --tw-prose-bold: var(--foreground);
+  --tw-prose-counters: var(--muted-foreground);
+  --tw-prose-bullets: var(--muted-foreground);
+  --tw-prose-hr: var(--border);
+  --tw-prose-quotes: var(--muted-foreground);
+  --tw-prose-quote-borders: var(--primary);
+  --tw-prose-captions: var(--muted-foreground);
+  --tw-prose-kbd: var(--foreground);
+  --tw-prose-code: var(--foreground);
+  --tw-prose-th-borders: var(--border);
+  --tw-prose-td-borders: var(--border);
+  line-height: 1.75;
+}
+.markdown :where(p, li) {
+  line-height: 1.75;
+}
+.markdown :where(h1, h2, h3, h4) {
+  margin-top: 1.4em;
+  margin-bottom: 0.5em;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.markdown > :first-child {
+  margin-top: 0;
+}
+.markdown > :last-child {
+  margin-bottom: 0;
+}
+.markdown a {
+  font-weight: 500;
+  text-decoration-color: color-mix(in oklab, var(--primary) 40%, transparent);
+  text-underline-offset: 3px;
+  transition: text-decoration-color 150ms;
+}
+.markdown a:hover {
+  text-decoration-color: var(--primary);
+}
+/* Inline code: a quiet chip, without the plugin's back-ticks. */
+.markdown :not(pre) > code {
+  border-radius: 0.3rem;
+  background: var(--muted);
+  padding: 0.12em 0.35em;
+  font-size: 0.875em;
+  font-weight: 500;
+}
+.markdown :not(pre) > code::before,
+.markdown :not(pre) > code::after {
+  content: none;
+}
+.markdown blockquote {
+  border-left-width: 3px;
+  font-style: normal;
+  font-weight: 400;
+}
+.markdown blockquote p::before,
+.markdown blockquote p::after {
+  content: none;
+}
+.markdown th {
+  font-weight: 600;
+}
+.markdown tbody tr:nth-child(even) {
+  background: color-mix(in oklab, var(--muted) 55%, transparent);
+}
+.markdown :where(th, td) {
+  padding-inline: 0.6em;
+}
+/* Display math scrolls on its own when wider than the message. */
+.markdown .katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-block: 0.25rem;
+}
+
+/* <details> that open and close smoothly (tool cards, tool groups, reasoning). Only where the browser
+   can animate to `auto` and `::details-content` exists; elsewhere they toggle instantly. */
+@supports (interpolate-size: allow-keywords) and selector(::details-content) {
+  .details-smooth {
+    interpolate-size: allow-keywords;
   }
-  .hljs-string,
-  .hljs-regexp,
-  .hljs-addition {
-    color: #a5d6ff;
+  .details-smooth::details-content {
+    block-size: 0;
+    overflow-y: clip;
   }
-  .hljs-number,
-  .hljs-literal,
-  .hljs-variable,
-  .hljs-attr {
-    color: #79c0ff;
+  .details-smooth[open]::details-content {
+    block-size: auto;
   }
-  .hljs-title,
-  .hljs-section,
-  .hljs-function {
-    color: #d2a8ff;
-  }
-  .hljs-comment,
-  .hljs-quote {
-    color: #8b949e;
-  }
-  .hljs-deletion {
-    color: #ffa198;
+  @media (prefers-reduced-motion: no-preference) {
+    .details-smooth::details-content {
+      transition:
+        block-size 200ms ease,
+        content-visibility 200ms allow-discrete;
+    }
   }
 }

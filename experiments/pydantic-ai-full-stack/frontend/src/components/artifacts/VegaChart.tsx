@@ -1,8 +1,9 @@
 // Renders a Vega-Lite spec. Loaded lazily (see ArtifactView): vega is most of the bundle.
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Loader } from "vega";
 import embed, { type VisualizationSpec } from "vega-embed";
 import { expressionInterpreter } from "vega-interpreter";
+import { useTheme } from "@/hooks/useTheme";
 
 // Specs come from the model. The backend only stores specs with inline data; on top of that
 // nothing is ever fetched (data, images, link targets), and expressions run in vega's
@@ -16,19 +17,6 @@ export const blockedLoader: Loader = {
   file: refuse,
 };
 
-const darkQuery = "(prefers-color-scheme: dark)";
-
-function useDarkMode(): boolean {
-  return useSyncExternalStore(
-    (onChange) => {
-      const media = window.matchMedia(darkQuery);
-      media.addEventListener("change", onChange);
-      return () => media.removeEventListener("change", onChange);
-    },
-    () => window.matchMedia(darkQuery).matches,
-  );
-}
-
 /** Single and layered charts fill their container's width; compound ones keep their own sizes. */
 export function fitted(spec: Record<string, unknown>): VisualizationSpec {
   if (!("mark" in spec || "layer" in spec)) return spec as VisualizationSpec;
@@ -40,7 +28,7 @@ export function fitted(spec: Record<string, unknown>): VisualizationSpec {
 
 export function VegaChart({ spec }: { spec: Record<string, unknown> }) {
   const container = useRef<HTMLDivElement>(null);
-  const dark = useDarkMode();
+  const dark = useTheme().resolved === "dark";
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {

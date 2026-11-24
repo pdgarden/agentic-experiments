@@ -98,6 +98,21 @@ describe("ChatView", () => {
     });
   });
 
+  it("fills the composer from a suggestion without sending it", async () => {
+    const api = existing();
+    renderWithClient(<ChatView conversationId={ID} draft={false} onCreated={() => {}} />);
+    const user = userEvent.setup();
+    const suggestions = await screen.findByRole("list", { name: "Suggestions" });
+    await user.click(within(suggestions).getByRole("button", { name: /Run some Python/ }));
+
+    const input = screen.getByLabelText("Message");
+    expect(input).toHaveValue(
+      "Use Python to list the first 20 prime numbers and compute their sum.",
+    );
+    expect(input).toHaveFocus();
+    expect(api.called("POST", "/api/chat")).toHaveLength(0);
+  });
+
   it("collapses the reasoning once the model is done thinking", async () => {
     existing({ "POST /api/chat": () => sse(thinkingSse) });
     renderWithClient(<ChatView conversationId={ID} draft={false} onCreated={() => {}} />);
@@ -188,6 +203,19 @@ describe("ChatView", () => {
     );
     await waitFor(() => expect(screen.queryByTestId("interrupted-banner")).not.toBeInTheDocument());
     expect(api.called("POST", `/api/chat/${ID}/continue`)).toHaveLength(1);
+  });
+
+  it("offers a retry when the models fail to load", async () => {
+    let fail = true;
+    existing({
+      "GET /api/models": () => (fail ? json({ detail: "gateway down" }, 502) : json(catalogue)),
+    });
+    renderWithClient(<ChatView conversationId={ID} draft={false} onCreated={() => {}} />);
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("Could not load the models");
+    fail = false;
+    await userEvent.setup().click(within(alert).getByRole("button", { name: "Retry" }));
+    expect(await screen.findByLabelText("Message")).toBeInTheDocument();
   });
 
   it("shows why a send was refused", async () => {
@@ -286,6 +314,9 @@ describe("ChatView", () => {
       expect(await within(panel).findByText("Version 2 body")).toBeInTheDocument();
       expect(within(panel).getByTestId("artifact-entry")).toHaveAttribute("aria-current", "true");
       expect(screen.queryByRole("button", { name: /Artifacts \(/ })).not.toBeInTheDocument();
+      // Text artifacts can be copied and downloaded from the panel header.
+      expect(within(panel).getByRole("button", { name: "Copy artifact" })).toBeInTheDocument();
+      expect(within(panel).getByRole("button", { name: "Download artifact" })).toBeInTheDocument();
 
       await user.click(within(panel).getByRole("combobox", { name: "Version" }));
       await user.click(await screen.findByRole("option", { name: "v1" }));

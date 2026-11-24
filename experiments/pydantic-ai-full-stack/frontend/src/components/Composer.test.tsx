@@ -1,4 +1,4 @@
-import { screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { Composer, withMediaType } from "@/components/Composer";
@@ -79,6 +79,20 @@ describe("Composer", () => {
     );
     await userEvent.setup().click(screen.getByRole("button", { name: "Stop" }));
     expect(onStop).toHaveBeenCalled();
+  });
+
+  it("shows the drop overlay until the drag really leaves the form", () => {
+    renderWithClient(
+      <Composer conversationId="c1" running={false} onSend={async () => {}} onStop={() => {}} />,
+    );
+    const form = screen.getByLabelText("Message").closest("form") as HTMLFormElement;
+    const dataTransfer = { types: ["Files"], files: [] };
+    fireEvent.dragEnter(form, { dataTransfer });
+    fireEvent.dragEnter(screen.getByLabelText("Message"), { dataTransfer }); // into a child
+    fireEvent.dragLeave(form, { dataTransfer }); // out of the form's own box
+    expect(screen.getByText("Drop files to attach")).toBeInTheDocument();
+    fireEvent.dragLeave(screen.getByLabelText("Message"), { dataTransfer });
+    expect(screen.queryByText("Drop files to attach")).not.toBeInTheDocument();
   });
 
   it("guesses a media type only when the browser gave none", () => {

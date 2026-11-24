@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { FileUIPart, UIMessage } from "ai";
-import { type ReactNode, useState } from "react";
+import { useRef, useState } from "react";
 import { api } from "@/api/client";
 import {
   conversationQuery,
@@ -23,11 +23,16 @@ import {
 import { Loader } from "@/components/ai-elements/message";
 import { ArtifactPanel, ArtifactsToggle } from "@/components/artifacts/ArtifactPanel";
 import { OpenArtifactContext } from "@/components/artifacts/context";
-import { Composer } from "@/components/Composer";
+import { Composer, type ComposerHandle } from "@/components/Composer";
 import { InterruptedBanner } from "@/components/InterruptedBanner";
+import { LogoMark } from "@/components/LogoMark";
 import { MessageView } from "@/components/MessageParts";
 import { ModelPicker } from "@/components/ModelPicker";
 import { McpPicker } from "@/components/mcp/McpPicker";
+import { Suggestions } from "@/components/Suggestions";
+import { Alert, RetryButton } from "@/components/ui/alert";
+import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/utils";
 
 interface ChatViewProps {
   conversationId: string;
@@ -45,8 +50,17 @@ export function ChatView({ conversationId, draft, onCreated }: ChatViewProps) {
   const models = useQuery(modelsQuery);
   // Without the MCP catalogue the chat still works, with no server to pick.
   const mcp = useQuery(mcpServersQuery);
-  if (models.isError) return <Notice>Could not load the models: {models.error.message}</Notice>;
-  if (!models.data || mcp.isPending) return <Notice>Loading…</Notice>;
+  if (models.isError) {
+    return (
+      <LoadError
+        title="Could not load the models"
+        error={models.error}
+        retrying={models.isFetching}
+        onRetry={() => void models.refetch()}
+      />
+    );
+  }
+  if (!models.data || mcp.isPending) return <ChatSkeleton messages={false} />;
   const servers = mcp.data ?? [];
   if (startedAsDraft) {
     return (
@@ -78,9 +92,16 @@ function ExistingChat({
   const [initial] = useState(() => history.data);
   const data = initial ?? history.data;
   if (history.isError && !data) {
-    return <Notice>Could not load this chat: {history.error.message}</Notice>;
+    return (
+      <LoadError
+        title="Could not load this chat"
+        error={history.error}
+        retrying={history.isFetching}
+        onRetry={() => void history.refetch()}
+      />
+    );
   }
-  if (!data) return <Notice>Loading…</Notice>;
+  if (!data) return <ChatSkeleton messages />;
   return (
     <ChatSession
       conversationId={conversationId}
@@ -117,6 +138,9 @@ function ChatSession({
   const [created, setCreated] = useState(!draft);
   const [stopError, setStopError] = useState<string | null>(null);
   const [openArtifactId, setOpenArtifactId] = useState<string | null>(null);
+  const composer = useRef<ComposerHandle>(null);
+  // Messages loaded from history appear as they are; only the ones added from now on fade in.
+  const [historyIds] = useState(() => new Set(initialMessages.map((m) => m.id)));
   // A new chat starts with every connected MCP server; the picker narrows it down.
   const [draftSettings, setDraftSettings] = useState<ConversationSettings>(() => ({
     model_id: catalogue.default_model,
@@ -160,12 +184,15 @@ function ChatSession({
 
   const changeSettings = (next: ConversationSettings) =>
     created ? saveSettings.mutate(next) : setDraftSettings(next);
+  // While empty, the greeting, the composer and the chips sit centred. The tree keeps the same
+  // shape either way, so the one `Composer` moves without remounting (focus, attachments stay).
+  const empty = chat.messages.length === 0;
 
   return (
     <OpenArtifactContext.Provider value={setOpenArtifactId}>
       <div className="flex h-full min-w-0 flex-1">
-        <div className="flex h-full min-w-0 flex-1 flex-col">
-          <header className="flex items-center gap-3 border-b px-4 py-2">
+        <div className="relative flex h-full min-w-0 flex-1 flex-col">
+          <header className="@container absolute inset-x-0 top-0 z-10 flex h-12 items-center gap-2 border-b border-border/60 bg-background/75 px-4 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
             <h1 className="min-w-0 flex-1 truncate text-sm font-medium" data-testid="chat-title">
               {title}
             </h1>
@@ -183,32 +210,41 @@ function ChatSession({
               <ArtifactsToggle conversationId={conversationId} onOpen={setOpenArtifactId} />
             )}
           </header>
-          <ConversationScroller>
-            {chat.messages.length === 0 && (
-              <ConversationEmptyState>
-                Ask anything. Attach images, PDFs or text files.
-              </ConversationEmptyState>
-            )}
+          <ConversationScroller className={cn("pt-12", empty && "hidden")}>
             {chat.messages.map((message) => (
               <MessageView
                 key={message.id}
                 message={message}
                 streaming={chat.running && message === last}
                 stopped={chat.stoppedIds.has(message.id)}
+                animate={!historyIds.has(message.id)}
               />
             ))}
             {waiting && <Loader />}
           </ConversationScroller>
-          <div className="mx-auto w-full max-w-3xl space-y-2 px-4 pb-4">
+          <div
+            className={cn(
+              "mx-auto w-full max-w-3xl space-y-2 px-4 pb-4",
+              empty && "flex flex-1 flex-col justify-center gap-6 space-y-0 pt-16 pb-[12vh]",
+            )}
+          >
+            {empty && (
+              <ConversationEmptyState
+                icon={<LogoMark size="lg" />}
+                title="What can I help with?"
+                description="Ask anything. Attach images, PDFs or text files."
+              />
+            )}
             {interrupted && (
               <InterruptedBanner interrupted={interrupted} onContinue={chat.continueRun} />
             )}
             {(chat.error || stopError || (created && saveSettings.error)) && (
-              <p role="status" className="text-xs text-destructive">
+              <Alert role="status" size="sm">
                 {chat.error?.message ?? stopError ?? saveSettings.error?.message}
-              </p>
+              </Alert>
             )}
             <Composer
+              ref={composer}
               conversationId={conversationId}
               running={chat.running}
               onSend={send}
@@ -217,6 +253,7 @@ function ChatSession({
                 chat.cancel().catch((err: Error) => setStopError(`Could not stop: ${err.message}`));
               }}
             />
+            {empty && <Suggestions onPick={(prompt) => composer.current?.setText(prompt)} />}
           </div>
         </div>
         {openArtifactId !== null && (
@@ -232,10 +269,69 @@ function ChatSession({
   );
 }
 
-function Notice({ children }: { children: ReactNode }) {
+/** A load that failed before the chat could show: what failed, and a retry. */
+function LoadError({
+  title,
+  error,
+  retrying,
+  onRetry,
+}: {
+  title: string;
+  error: Error;
+  retrying: boolean;
+  onRetry: () => void;
+}) {
   return (
-    <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
-      {children}
+    <div className="flex flex-1 items-center justify-center p-4">
+      <Alert
+        title={title}
+        className="w-full max-w-md"
+        action={<RetryButton busy={retrying} onRetry={onRetry} />}
+      >
+        <p className="text-muted-foreground">{error.message}</p>
+      </Alert>
+    </div>
+  );
+}
+
+/** The chat's shape while it loads: the header, a few message-shaped blocks, the composer. */
+function ChatSkeleton({ messages }: { messages: boolean }) {
+  return (
+    <div className="flex h-full min-w-0 flex-1 flex-col">
+      <span role="status" className="sr-only">
+        Loading…
+      </span>
+      <div className="flex h-12 items-center gap-2 border-b border-border/60 px-4">
+        <Skeleton className="h-4 w-40 max-w-[40%]" />
+        <Skeleton className="ml-auto h-7 w-16 rounded-full" />
+        <Skeleton className="h-7 w-24 rounded-full" />
+      </div>
+      <div className="mx-auto w-full max-w-3xl flex-1 space-y-6 overflow-hidden px-4 py-8">
+        {messages && (
+          <>
+            <Skeleton className="ml-auto h-10 w-2/3 max-w-sm rounded-2xl rounded-br-md bg-accent-soft" />
+            <div className="flex gap-3">
+              <Skeleton className="size-6 shrink-0 rounded-md" />
+              <div className="flex-1 space-y-2.5 pt-1">
+                <Skeleton className="h-3.5 w-11/12" />
+                <Skeleton className="h-3.5 w-4/5" />
+                <Skeleton className="h-3.5 w-3/5" />
+              </div>
+            </div>
+            <Skeleton className="ml-auto h-10 w-1/2 max-w-xs rounded-2xl rounded-br-md bg-accent-soft" />
+            <div className="flex gap-3">
+              <Skeleton className="size-6 shrink-0 rounded-md" />
+              <div className="flex-1 space-y-2.5 pt-1">
+                <Skeleton className="h-3.5 w-full" />
+                <Skeleton className="h-3.5 w-2/3" />
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+      <div className="mx-auto w-full max-w-3xl px-4 pb-4">
+        <Skeleton className="h-[6.5rem] rounded-2xl" />
+      </div>
     </div>
   );
 }

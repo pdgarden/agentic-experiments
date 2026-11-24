@@ -1,3 +1,4 @@
+import { Brain, Sparkles } from "lucide-react";
 import type { ConversationSettings, ModelInfo, ThinkingLevel } from "@/api/types";
 import {
   Select,
@@ -6,12 +7,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { cn } from "@/utils";
+
+/**
+ * The header's compact pill look, shared with the MCP picker. In a narrow header (an `@container`
+ * under 32rem) the chevrons go, and `pillLabel` hides a label visually (not from screen readers).
+ */
+export const pillClass =
+  "h-7 gap-1.5 rounded-full border-border/70 bg-transparent px-2.5 text-xs font-medium shadow-none hover:bg-accent dark:bg-transparent dark:hover:bg-accent [&_svg:not([class*='size-'])]:size-3.5 @max-lg:[&_svg.lucide-chevron-down]:hidden";
+export const pillLabel = "@max-lg:sr-only";
 
 const thinkingLabel: Record<ThinkingLevel, string> = {
   off: "Thinking off",
   low: "Thinking low",
   medium: "Thinking medium",
   high: "Thinking high",
+};
+
+const thinkingShort: Record<ThinkingLevel, string> = {
+  off: "Off",
+  low: "Low",
+  medium: "Medium",
+  high: "High",
 };
 
 /** The settings with another model; a thinking level the new model lacks falls back to off. */
@@ -31,7 +48,7 @@ export function ModelPicker({ models, settings, onChange, disabled }: ModelPicke
   const current = models.find((m) => m.id === settings.model_id);
   const levels = current?.thinking_levels ?? ["off"];
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-1.5">
       <Select
         value={settings.model_id}
         disabled={disabled}
@@ -40,8 +57,16 @@ export function ModelPicker({ models, settings, onChange, disabled }: ModelPicke
           if (model) onChange(withModel(settings, model));
         }}
       >
-        <SelectTrigger size="sm" aria-label="Model" className="w-40">
-          <SelectValue />
+        <SelectTrigger
+          size="sm"
+          aria-label="Model"
+          title={current ? `Model: ${current.label}` : "Model"}
+          className={cn(pillClass, "max-w-44")}
+        >
+          <Sparkles className="text-primary" aria-hidden />
+          <SelectValue>
+            <span className={pillLabel}>{current?.label}</span>
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
           {models.map((m) => (
@@ -57,8 +82,14 @@ export function ModelPicker({ models, settings, onChange, disabled }: ModelPicke
           disabled={disabled}
           onValueChange={(level) => onChange({ ...settings, thinking: level as ThinkingLevel })}
         >
-          <SelectTrigger size="sm" aria-label="Thinking" className="w-40">
-            <SelectValue />
+          <SelectTrigger
+            size="sm"
+            aria-label="Thinking"
+            title={thinkingLabel[settings.thinking]}
+            className={cn(pillClass, settings.thinking === "off" && "text-muted-foreground")}
+          >
+            <Brain aria-hidden />
+            <SelectValue>{thinkingShort[settings.thinking]}</SelectValue>
           </SelectTrigger>
           <SelectContent>
             {levels.map((level) => (

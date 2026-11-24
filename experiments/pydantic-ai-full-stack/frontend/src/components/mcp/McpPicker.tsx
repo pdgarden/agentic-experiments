@@ -1,6 +1,7 @@
 import { ChevronDown, Plug } from "lucide-react";
 import { Popover } from "radix-ui";
 import type { ConversationSettings, McpServerInfo } from "@/api/types";
+import { pillClass } from "@/components/ModelPicker";
 import { Button } from "@/components/ui/button";
 
 /** The settings with `name` enabled or not, keeping the catalogue's order. */
@@ -31,9 +32,17 @@ export function McpPicker({ servers, settings, onChange }: McpPickerProps) {
   return (
     <Popover.Root>
       <Popover.Trigger asChild>
-        <Button variant="outline" size="sm" aria-label="MCP servers">
-          <Plug /> MCP {enabled}/{servers.length}
-          <ChevronDown className="text-muted-foreground" />
+        <Button
+          variant="outline"
+          size="sm"
+          aria-label="MCP servers"
+          title={`MCP servers: ${enabled} of ${servers.length} enabled`}
+          className={pillClass}
+        >
+          <Plug aria-hidden />
+          <span className="sr-only">MCP </span>
+          {enabled}/{servers.length}
+          <ChevronDown className="text-muted-foreground opacity-50" />
         </Button>
       </Popover.Trigger>
       <Popover.Portal>

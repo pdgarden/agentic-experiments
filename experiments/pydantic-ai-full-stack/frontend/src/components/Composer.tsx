@@ -1,14 +1,32 @@
 import type { FileUIPart } from "ai";
-import { FileText, Loader2, Paperclip, X } from "lucide-react";
-import { type ClipboardEvent, type FormEvent, useRef, useState } from "react";
+import {
+  CircleAlert,
+  FileBraces,
+  File as FileIcon,
+  FileSpreadsheet,
+  FileText,
+  Loader2,
+  Paperclip,
+  X,
+} from "lucide-react";
+import {
+  type ClipboardEvent,
+  type FormEvent,
+  type Ref,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
 import { api } from "@/api/client";
 import type { UploadedFile } from "@/api/types";
 import {
   PromptInput,
+  PromptInputHint,
   PromptInputSubmit,
   PromptInputTextarea,
   PromptInputToolbar,
 } from "@/components/ai-elements/prompt-input";
+import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/utils";
 
@@ -43,6 +61,7 @@ export function withMediaType(file: File): File {
 interface Attachment {
   key: string;
   name: string;
+  mediaType: string;
   previewUrl: string | null;
   uploaded: UploadedFile | null;
   error: string | null;
@@ -55,7 +74,90 @@ const toFilePart = (file: UploadedFile): FileUIPart => ({
   url: file.url,
 });
 
+function fileIcon(mediaType: string) {
+  if (mediaType === "text/csv") return FileSpreadsheet;
+  if (mediaType === "application/json") return FileBraces;
+  if (mediaType.startsWith("text/") || mediaType === "application/pdf") return FileText;
+  return FileIcon;
+}
+
+const extensionOf = (name: string) =>
+  name.includes(".") ? (name.split(".").pop()?.toUpperCase() ?? "") : "";
+
+/** One attachment: a thumbnail for images, an icon and the name otherwise. */
+function AttachmentCard({
+  attachment: a,
+  onRemove,
+}: {
+  attachment: Attachment;
+  onRemove: () => void;
+}) {
+  const status = a.error ? "error" : a.uploaded ? "ready" : "uploading";
+  const Icon = fileIcon(a.mediaType);
+  return (
+    <li
+      data-testid="attachment"
+      data-status={status}
+      title={a.error ?? a.name}
+      className={cn(
+        "group/attachment relative h-14 rounded-xl border bg-background text-xs motion-safe:animate-in motion-safe:fade-in-0 motion-safe:zoom-in-95",
+        a.previewUrl ? "w-14" : "flex max-w-56 items-center gap-2 pr-3 pl-1.5",
+        a.error && "border-destructive/50 bg-destructive/10 text-destructive",
+      )}
+    >
+      {a.previewUrl ? (
+        <>
+          <img src={a.previewUrl} alt="" className="size-full rounded-[inherit] object-cover" />
+          <span className="sr-only">{a.name}</span>
+        </>
+      ) : (
+        <>
+          <span
+            className={cn(
+              "flex size-10 shrink-0 items-center justify-center rounded-lg",
+              a.error ? "bg-destructive/15" : "bg-accent-soft text-accent-soft-foreground",
+            )}
+          >
+            <Icon className="size-5" />
+          </span>
+          <span className="min-w-0">
+            <span className="block truncate font-medium">{a.name}</span>
+            <span className={cn("block", !a.error && "text-muted-foreground")}>
+              {a.error ? "Upload failed" : extensionOf(a.name) || "File"}
+            </span>
+          </span>
+        </>
+      )}
+      {status === "uploading" && (
+        <span className="absolute inset-0 flex items-center justify-center rounded-[inherit] bg-background/70">
+          <Loader2 className="size-4 text-primary motion-safe:animate-spin" />
+          <span className="sr-only">Uploading</span>
+        </span>
+      )}
+      {a.error && a.previewUrl && (
+        <span className="absolute inset-0 flex items-center justify-center rounded-[inherit] bg-destructive/40">
+          <CircleAlert className="size-5 text-destructive-foreground" />
+        </span>
+      )}
+      <button
+        type="button"
+        aria-label={`Remove ${a.name}`}
+        onClick={onRemove}
+        className="absolute -top-1.5 -right-1.5 flex size-5 items-center justify-center rounded-full bg-foreground text-background shadow-sm opacity-0 transition-opacity group-hover/attachment:opacity-100 hover:bg-foreground/80 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none pointer-coarse:opacity-100"
+      >
+        <X className="size-3" />
+      </button>
+    </li>
+  );
+}
+
+/** Lets the parent fill the input, e.g. from a suggestion. */
+export interface ComposerHandle {
+  setText: (text: string) => void;
+}
+
 interface ComposerProps {
+  ref?: Ref<ComposerHandle>;
   conversationId: string;
   running: boolean;
   onSend: (text: string, files: FileUIPart[]) => Promise<void>;
@@ -63,12 +165,24 @@ interface ComposerProps {
 }
 
 /** Message input with attachments: each file is uploaded as soon as it is added. */
-export function Composer({ conversationId, running, onSend, onStop }: ComposerProps) {
+export function Composer({ ref, conversationId, running, onSend, onStop }: ComposerProps) {
   const [text, setText] = useState("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+  const textarea = useRef<HTMLTextAreaElement>(null);
+
+  useImperativeHandle(ref, () => ({
+    setText: (next: string) => {
+      setText(next);
+      const element = textarea.current;
+      if (!element) return;
+      element.focus();
+      // The caret after the text, once React has written it.
+      requestAnimationFrame(() => element.setSelectionRange(next.length, next.length));
+    },
+  }));
 
   const uploading = attachments.some((a) => !a.uploaded && !a.error);
   const ready = attachments.flatMap((a) => (a.uploaded ? [a.uploaded] : []));
@@ -84,7 +198,7 @@ export function Composer({ conversationId, running, onSend, onStop }: ComposerPr
       const previewUrl = file.type.startsWith("image/") ? URL.createObjectURL(file) : null;
       setAttachments((list) => [
         ...list,
-        { key, name: file.name, previewUrl, uploaded: null, error: null },
+        { key, name: file.name, mediaType: file.type, previewUrl, uploaded: null, error: null },
       ]);
       api.upload(file, conversationId).then(
         (uploaded) => update(key, { uploaded }),
@@ -129,47 +243,16 @@ export function Composer({ conversationId, running, onSend, onStop }: ComposerPr
   };
 
   return (
-    <PromptInput
-      onSubmit={submit}
-      onDragOver={(event) => event.preventDefault()}
-      onDrop={(event) => {
-        event.preventDefault();
-        add(event.dataTransfer.files);
-      }}
-    >
+    <PromptInput onSubmit={submit} onDropFiles={add}>
       {attachments.length > 0 && (
-        <ul className="flex flex-wrap gap-2 px-1 pb-2" aria-label="Attachments">
+        <ul className="flex flex-wrap gap-2 px-1 pt-1 pb-2" aria-label="Attachments">
           {attachments.map((a) => (
-            <li
-              key={a.key}
-              data-testid="attachment"
-              data-status={a.error ? "error" : a.uploaded ? "ready" : "uploading"}
-              title={a.error ?? a.name}
-              className={cn(
-                "flex max-w-56 items-center gap-1.5 rounded-md border px-2 py-1 text-xs",
-                a.error && "border-destructive text-destructive",
-              )}
-            >
-              {a.previewUrl ? (
-                <img src={a.previewUrl} alt="" className="size-6 rounded object-cover" />
-              ) : (
-                <FileText className="size-3.5 shrink-0" />
-              )}
-              <span className="truncate">{a.name}</span>
-              {!a.uploaded && !a.error && <Loader2 className="size-3.5 shrink-0 animate-spin" />}
-              <button
-                type="button"
-                className="shrink-0 rounded hover:bg-muted"
-                aria-label={`Remove ${a.name}`}
-                onClick={() => remove(a.key)}
-              >
-                <X className="size-3.5" />
-              </button>
-            </li>
+            <AttachmentCard key={a.key} attachment={a} onRemove={() => remove(a.key)} />
           ))}
         </ul>
       )}
       <PromptInputTextarea
+        ref={textarea}
         value={text}
         onChange={(event) => setText(event.target.value)}
         onSubmitKey={() => void submit()}
@@ -196,18 +279,20 @@ export function Composer({ conversationId, running, onSend, onStop }: ComposerPr
           size="icon"
           variant="ghost"
           aria-label="Attach files"
+          className="rounded-full text-muted-foreground hover:text-foreground"
           onClick={() => fileInput.current?.click()}
         >
           <Paperclip />
         </Button>
+        <PromptInputHint />
         <div className="ml-auto">
           <PromptInputSubmit running={running} disabled={!canSend} onStop={onStop} />
         </div>
       </PromptInputToolbar>
       {error && (
-        <p role="alert" className="px-2 text-xs text-destructive">
+        <Alert size="sm" className="mx-1 mt-2">
           {error}
-        </p>
+        </Alert>
       )}
     </PromptInput>
   );

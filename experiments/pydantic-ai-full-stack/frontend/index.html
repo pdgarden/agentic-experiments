@@ -4,6 +4,20 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Agent chat</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <script>
+      // Sets the theme before first paint (no flash). Same key and logic as src/hooks/useTheme.ts.
+      (() => {
+        let choice = "system";
+        try {
+          choice = localStorage.getItem("theme") || "system";
+        } catch {}
+        const dark =
+          choice === "dark" ||
+          (choice !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+        document.documentElement.classList.toggle("dark", dark);
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

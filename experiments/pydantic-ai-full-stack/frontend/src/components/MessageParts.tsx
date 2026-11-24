@@ -1,9 +1,11 @@
 import { type FileUIPart, getToolOrDynamicToolName, isToolUIPart, type UIMessage } from "ai";
 import { FileText } from "lucide-react";
+import type { ReactNode } from "react";
 import { Message } from "@/components/ai-elements/message";
 import { Reasoning } from "@/components/ai-elements/reasoning";
-import { Tool } from "@/components/ai-elements/tool";
+import { Tool, type ToolCallView, ToolGroup } from "@/components/ai-elements/tool";
 import { ArtifactCard, artifactRef } from "@/components/artifacts/ArtifactCard";
+import { CopyButton } from "@/components/CopyButton";
 import { Markdown } from "@/components/Markdown";
 import { Badge } from "@/components/ui/badge";
 
@@ -23,54 +25,104 @@ interface MessageViewProps {
   /** This message is the one being streamed right now. */
   streaming: boolean;
   stopped: boolean;
+  /** Added after the chat was opened (not loaded from history): fades in. */
+  animate?: boolean;
 }
 
-export function MessageView({ message, streaming, stopped }: MessageViewProps) {
+/** The message's text parts as Markdown, for copying. */
+export function messageText(message: UIMessage): string {
+  return message.parts
+    .flatMap((part) => (part.type === "text" && part.text.trim() ? [part.text] : []))
+    .join("\n\n");
+}
+
+type Item =
+  | { kind: "node"; key: string; element: ReactNode }
+  | { kind: "tool"; key: string; call: ToolCallView };
+
+/** Runs of two or more consecutive tool calls fold into one `ToolGroup`; a lone call stays a card. */
+function groupTools(items: Item[]): ReactNode[] {
+  const out: ReactNode[] = [];
+  let run: Extract<Item, { kind: "tool" }>[] = [];
+  const flush = () => {
+    const cards = run.map((item) => <Tool key={item.key} call={item.call} />);
+    if (run.length > 1) {
+      out.push(
+        <ToolGroup key={`group-${run[0]?.key}`} calls={run.map((item) => item.call)}>
+          {cards}
+        </ToolGroup>,
+      );
+    } else out.push(...cards);
+    run = [];
+  };
+  for (const item of items) {
+    if (item.kind === "tool") {
+      run.push(item);
+      continue;
+    }
+    flush();
+    out.push(item.element);
+  }
+  flush();
+  return out;
+}
+
+export function MessageView({ message, streaming, stopped, animate }: MessageViewProps) {
   if (message.role === "system") return null;
-  const parts = message.parts.map((part, index) => {
+  const toItem = (part: UIMessage["parts"][number], index: number): Item | null => {
     const key = `${message.id}-${index}`;
+    const node = (element: ReactNode): Item => ({ kind: "node", key, element });
     if (part.type === "text") {
       if (message.role === "user") {
         const name = attachmentName(part.text);
-        if (name !== null) return <FileChip key={key} filename={name} />;
-        return (
+        if (name !== null) return node(<FileChip key={key} filename={name} />);
+        return node(
           <p key={key} className="whitespace-pre-wrap break-words">
             {part.text}
-          </p>
+          </p>,
         );
       }
-      return <Markdown key={key} text={part.text} />;
+      return node(<Markdown key={key} text={part.text} />);
     }
     if (part.type === "reasoning") {
       if (!part.text.trim()) return null;
-      return (
-        <Reasoning key={key} text={part.text} streaming={streaming && part.state === "streaming"} />
+      return node(
+        <Reasoning
+          key={key}
+          text={part.text}
+          streaming={streaming && part.state === "streaming"}
+        />,
       );
     }
-    if (part.type === "file") return <FileView key={key} part={part} />;
+    if (part.type === "file") return node(<FileView key={key} part={part} />);
     if (isToolUIPart(part)) {
       const artifact =
         part.state === "output-available" && ARTIFACT_TOOLS.has(getToolOrDynamicToolName(part))
           ? artifactRef(part.output)
           : null;
-      if (artifact) return <ArtifactCard key={key} artifact={artifact} />;
-      return (
-        <Tool
-          key={key}
-          call={{
-            name: getToolOrDynamicToolName(part),
-            state: part.state,
-            input: part.input,
-            output: part.state === "output-available" ? part.output : undefined,
-            errorText: part.state === "output-error" ? part.errorText : undefined,
-          }}
-        />
-      );
+      if (artifact) return node(<ArtifactCard key={key} artifact={artifact} />);
+      return {
+        kind: "tool",
+        key,
+        call: {
+          name: getToolOrDynamicToolName(part),
+          state: part.state,
+          input: part.input,
+          output: part.state === "output-available" ? part.output : undefined,
+          errorText: part.state === "output-error" ? part.errorText : undefined,
+        },
+      };
     }
-    return null; // step-start, data-* parts
-  });
+    // step-start, data-* parts render nothing, so tool calls on either side still group.
+    return null;
+  };
+  const parts = groupTools(message.parts.flatMap((part, index) => toItem(part, index) ?? []));
+  const actions =
+    message.role === "assistant" && !streaming && messageText(message) ? (
+      <CopyButton label="Copy response" text={() => messageText(message)} />
+    ) : null;
   return (
-    <Message from={message.role}>
+    <Message from={message.role} actions={actions} animate={animate}>
       {parts}
       {stopped && (
         <Badge variant="outline" className="text-muted-foreground">

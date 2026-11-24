@@ -53,4 +53,40 @@ describe("Sidebar", () => {
     expect(await screen.findByRole("button", { name: "Delete Busy" })).toBeDisabled();
     expect(screen.getByLabelText("Running")).toBeInTheDocument();
   });
+
+  it("groups chats by when they last changed", async () => {
+    const daysAgo = (days: number) => new Date(Date.now() - days * 86_400_000).toISOString();
+    mockApi({
+      "GET /api/conversations": () =>
+        json([
+          conversation("a", { title: "Fresh", updated_at: new Date().toISOString() }),
+          conversation("b", { title: "Old", updated_at: daysAgo(30) }),
+        ]),
+    });
+    renderWithClient(<Sidebar selectedId={null} onSelect={() => {}} />);
+    const today = await screen.findByRole("list", { name: "Today" });
+    expect(within(today).getByRole("button", { name: "Fresh" })).toBeInTheDocument();
+    const older = screen.getByRole("list", { name: "Older" });
+    expect(within(older).getByRole("button", { name: "Old" })).toBeInTheDocument();
+  });
+
+  it("collapses to a rail with the button or Ctrl+B, and remembers it", async () => {
+    localStorage.clear();
+    mockApi({ "GET /api/conversations": () => json([]) });
+    const onSelect = vi.fn();
+    const { unmount } = renderWithClient(<Sidebar selectedId={null} onSelect={onSelect} />);
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole("button", { name: "Collapse sidebar" }));
+    expect(screen.queryByRole("navigation", { name: "Chats" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "New chat" }));
+    expect(onSelect).toHaveBeenCalledWith(null);
+    unmount();
+
+    renderWithClient(<Sidebar selectedId={null} onSelect={onSelect} />);
+    expect(screen.getByRole("button", { name: "Expand sidebar" })).toBeInTheDocument();
+    await user.keyboard("{Control>}b{/Control}");
+    expect(await screen.findByRole("navigation", { name: "Chats" })).toBeInTheDocument();
+    localStorage.clear();
+  });
 });
