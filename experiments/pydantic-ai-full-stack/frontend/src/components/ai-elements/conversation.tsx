@@ -40,7 +40,9 @@ export function Conversation({ children, className }: { children: ReactNode; cla
   return (
     <div
       ref={scroller}
-      className={cn("flex-1 overflow-y-auto", className)}
+      // `relative`: absolutely positioned content (sr-only labels, KaTeX's MathML) must be clipped
+      // by this scroller. Without it they escape to the chat column and make the page scroll too.
+      className={cn("relative flex-1 overflow-y-auto", className)}
       data-testid="chat-scroller"
       // A wheel up is intent, even when a token lands in the same frame and hides the move.
       onWheel={(event) => {
