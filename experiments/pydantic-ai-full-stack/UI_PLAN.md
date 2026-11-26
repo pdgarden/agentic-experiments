@@ -32,8 +32,10 @@ at the bottom.
   `user-message`, `assistant-message`, `tool-card`, `tool-code`, `reasoning`, `attachment`, `file-chip`,
   `file-input`, `chat-title`, `chat-scroller`, `mcp-servers`, `artifact-card`, `artifact-entry`,
   `artifact-panel-view`, and the buttons named `Send`, `Stop`, `New chat`, `Delete`, `Close artifacts`,
-  `Rename …`, `Delete …`, `Open …`, `Artifacts (n)`, plus the comboboxes `Model`, `Thinking`, `Version`, the
-  `Message` and `Chat title` labels, the `Chats` navigation and the `Artifacts` complementary region.
+  `Rename …`, `Delete …`, `Open …`, `Artifacts (n)`, `Add`, `Model and thinking`, `Disable …`, plus
+  `mcp-option`, the `Version` combobox, the `Message` and `Chat title` labels, the `Chats`
+  navigation and the `Artifacts` complementary region. (The `Model` / `Thinking` comboboxes, the header
+  `MCP servers` button and the paperclip were replaced by `COMPOSER_PLAN.md`.)
   If a test has to change, change its selector, not what it checks.
 - **Use theme tokens** (`bg-primary/10`, `text-muted-foreground`, …). No raw hex in components.
   Check every change in **both light and dark** themes.
@@ -408,3 +410,8 @@ deferred ideas such as ⌘K search or regenerate).
 - **Not done:** no screenshot added to `README.md` (it would put binary files in the repo; easy to add).
   Follow-ups from earlier steps still open: ⌘K chat search, *Regenerate* (needs a backend endpoint).
 
+### Later: composer settings
+
+- The step 6 toolbar (paperclip, `PromptInputHint`) and the header's MCP / model pickers were replaced by
+  [`COMPOSER_PLAN.md`](COMPOSER_PLAN.md): a `+` menu in the composer (attach, MCP servers) and a footer
+  line under it (the "model · thinking" button; the MCP chips were later dropped). The test-hook list above is updated.

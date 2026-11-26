@@ -234,17 +234,23 @@ describe("ChatView", () => {
     });
     renderWithClient(<ChatView conversationId={ID} draft={false} onCreated={() => {}} />);
     const user = userEvent.setup();
-    await user.click(await screen.findByRole("combobox", { name: "Model" }));
-    await user.click(await screen.findByRole("option", { name: "GPT mini" }));
+    const button = await screen.findByRole("button", { name: "Model and thinking" });
+    await user.click(button);
+    expect(await screen.findByRole("menuitemradio", { name: "High" })).toBeInTheDocument();
+    await user.click(screen.getByRole("menuitemradio", { name: "GPT mini" }));
 
     await waitFor(() => expect(api.called("PUT", `/api/conversations/${ID}`)).toHaveLength(1));
     expect(api.called("PUT", `/api/conversations/${ID}`)[0]?.body).toMatchObject({
       model_id: "gpt-mini",
       thinking: "off",
     });
+    // The menu stays open and the thinking group goes with the model.
     await waitFor(() =>
-      expect(screen.queryByRole("combobox", { name: "Thinking" })).not.toBeInTheDocument(),
+      expect(screen.queryByRole("menuitemradio", { name: "High" })).not.toBeInTheDocument(),
     );
+    expect(screen.getByRole("menuitemradio", { name: "GPT mini" })).toBeInTheDocument();
+    await user.keyboard("{Escape}");
+    expect(button).toHaveTextContent("GPT mini");
   });
 
   describe("artifacts", () => {
@@ -370,16 +376,23 @@ describe("ChatView", () => {
       });
       renderWithClient(<ChatView conversationId={ID} draft onCreated={() => {}} />);
       const user = userEvent.setup();
-      const picker = await screen.findByRole("button", { name: "MCP servers" });
-      expect(picker).toHaveTextContent("MCP 2/3");
+      await user.click(await screen.findByRole("button", { name: "Add" }));
+      const submenu = await screen.findByRole("menuitem", { name: /MCP servers/ });
+      expect(submenu).toHaveTextContent("2/3");
 
-      await user.click(picker);
+      await user.click(submenu);
       const options = await screen.findAllByTestId("mcp-option");
-      expect(within(options[2] as HTMLElement).getByRole("checkbox")).toBeDisabled();
+      expect(options[2]).toHaveAttribute("aria-disabled", "true");
       expect(options[2]).toHaveTextContent("failed");
-      await user.click(within(options[0] as HTMLElement).getByRole("checkbox"));
-      expect(picker).toHaveTextContent("MCP 1/3");
+      expect(options[0]).toHaveAttribute("aria-checked", "true");
+      // By keyboard: jsdom has no layout, so a pointer moving into the sub-menu closes it.
+      (options[0] as HTMLElement).focus();
+      await user.keyboard(" ");
+      expect(options[0]).toHaveAttribute("aria-checked", "false"); // still open
+      expect(submenu).toHaveTextContent("1/3");
       await user.keyboard("{Escape}");
+      await user.keyboard("{Escape}");
+      await waitFor(() => expect(screen.queryByRole("menu")).not.toBeInTheDocument());
 
       await send("Hello there");
       await waitFor(() => expect(api.called("PUT", `/api/conversations/${ID}`)).toHaveLength(1));

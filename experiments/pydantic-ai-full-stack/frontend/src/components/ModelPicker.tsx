@@ -1,28 +1,15 @@
-import { Brain, Sparkles } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import type { ConversationSettings, ModelInfo, ThinkingLevel } from "@/api/types";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/utils";
-
-/**
- * The header's compact pill look, shared with the MCP picker. In a narrow header (an `@container`
- * under 32rem) the chevrons go, and `pillLabel` hides a label visually (not from screen readers).
- */
-export const pillClass =
-  "h-7 gap-1.5 rounded-full border-border/70 bg-transparent px-2.5 text-xs font-medium shadow-none hover:bg-accent dark:bg-transparent dark:hover:bg-accent [&_svg:not([class*='size-'])]:size-3.5 @max-lg:[&_svg.lucide-chevron-down]:hidden";
-export const pillLabel = "@max-lg:sr-only";
-
-const thinkingLabel: Record<ThinkingLevel, string> = {
-  off: "Thinking off",
-  low: "Thinking low",
-  medium: "Thinking medium",
-  high: "Thinking high",
-};
 
 const thinkingShort: Record<ThinkingLevel, string> = {
   off: "Off",
@@ -37,69 +24,89 @@ export function withModel(settings: ConversationSettings, model: ModelInfo): Con
   return { ...settings, model_id: model.id, thinking };
 }
 
+/** The button's text: the model, plus the thinking level when it is on and can change. */
+export function modelLabel(model: ModelInfo | undefined, thinking: ThinkingLevel): string {
+  if (!model) return "Model";
+  const levels = model.thinking_levels;
+  return levels.length > 1 && thinking !== "off"
+    ? `${model.label} · ${thinkingShort[thinking]}`
+    : model.label;
+}
+
 interface ModelPickerProps {
   models: ModelInfo[];
   settings: ConversationSettings;
   onChange: (settings: ConversationSettings) => void;
   disabled?: boolean;
+  className?: string;
 }
 
-export function ModelPicker({ models, settings, onChange, disabled }: ModelPickerProps) {
+/**
+ * One quiet "model · thinking" button opening a menu with two radio groups. Picking a model keeps
+ * the menu open so the thinking group updates in place; picking a level closes it.
+ *
+ * With many models (say more than 6) the thinking group would be better as a `Thinking › Medium`
+ * sub-menu; not needed for today's catalogue.
+ */
+export function ModelPicker({ models, settings, onChange, disabled, className }: ModelPickerProps) {
   const current = models.find((m) => m.id === settings.model_id);
   const levels = current?.thinking_levels ?? ["off"];
+  const label = modelLabel(current, settings.thinking);
+  const title =
+    current && levels.length > 1
+      ? `Model: ${current.label}, thinking ${thinkingShort[settings.thinking].toLowerCase()}`
+      : `Model: ${current?.label ?? "none"}`;
   return (
-    <div className="flex items-center gap-1.5">
-      <Select
-        value={settings.model_id}
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        aria-label="Model and thinking"
+        title={title}
         disabled={disabled}
-        onValueChange={(id) => {
-          const model = models.find((m) => m.id === id);
-          if (model) onChange(withModel(settings, model));
-        }}
+        className={cn(
+          "inline-flex min-w-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-sm text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 data-[state=open]:text-foreground",
+          className,
+        )}
       >
-        <SelectTrigger
-          size="sm"
-          aria-label="Model"
-          title={current ? `Model: ${current.label}` : "Model"}
-          className={cn(pillClass, "max-w-44")}
+        <span className="truncate">{label}</span>
+        <ChevronDown className="size-3.5 shrink-0" aria-hidden />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent side="top" align="end" className="w-52">
+        <DropdownMenuLabel>Model</DropdownMenuLabel>
+        <DropdownMenuRadioGroup
+          value={settings.model_id}
+          onValueChange={(id) => {
+            const model = models.find((m) => m.id === id);
+            if (model) onChange(withModel(settings, model));
+          }}
         >
-          <Sparkles className="text-primary" aria-hidden />
-          <SelectValue>
-            <span className={pillLabel}>{current?.label}</span>
-          </SelectValue>
-        </SelectTrigger>
-        <SelectContent>
           {models.map((m) => (
-            <SelectItem key={m.id} value={m.id}>
+            <DropdownMenuRadioItem
+              key={m.id}
+              value={m.id}
+              // Stay open: the thinking group below follows the new model.
+              onSelect={(event) => event.preventDefault()}
+            >
               {m.label}
-            </SelectItem>
+            </DropdownMenuRadioItem>
           ))}
-        </SelectContent>
-      </Select>
-      {levels.length > 1 && (
-        <Select
-          value={settings.thinking}
-          disabled={disabled}
-          onValueChange={(level) => onChange({ ...settings, thinking: level as ThinkingLevel })}
-        >
-          <SelectTrigger
-            size="sm"
-            aria-label="Thinking"
-            title={thinkingLabel[settings.thinking]}
-            className={cn(pillClass, settings.thinking === "off" && "text-muted-foreground")}
-          >
-            <Brain aria-hidden />
-            <SelectValue>{thinkingShort[settings.thinking]}</SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            {levels.map((level) => (
-              <SelectItem key={level} value={level}>
-                {thinkingLabel[level]}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      )}
-    </div>
+        </DropdownMenuRadioGroup>
+        {levels.length > 1 && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel>Thinking</DropdownMenuLabel>
+            <DropdownMenuRadioGroup
+              value={settings.thinking}
+              onValueChange={(level) => onChange({ ...settings, thinking: level as ThinkingLevel })}
+            >
+              {levels.map((level) => (
+                <DropdownMenuRadioItem key={level} value={level}>
+                  {thinkingShort[level]}
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
+          </>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

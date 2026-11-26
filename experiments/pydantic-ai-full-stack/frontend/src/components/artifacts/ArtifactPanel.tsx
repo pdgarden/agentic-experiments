@@ -13,7 +13,6 @@ import type { ArtifactKind, ArtifactRecord } from "@/api/types";
 import { ArtifactIcon } from "@/components/artifacts/ArtifactCard";
 import { ArtifactSkeleton, ArtifactView } from "@/components/artifacts/ArtifactView";
 import { CopyButton } from "@/components/CopyButton";
-import { pillClass, pillLabel } from "@/components/ModelPicker";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,6 +24,15 @@ import {
 } from "@/components/ui/select";
 import { clampWidth, usePanelWidth } from "@/hooks/usePanelWidth";
 import { cn } from "@/utils";
+
+/**
+ * The header's compact pill look (the artifacts toggle, the version picker). In a narrow header (an
+ * `@container` under 32rem) the chevrons go, and `pillLabel` hides a label visually (not from screen
+ * readers).
+ */
+const pillClass =
+  "h-7 gap-1.5 rounded-full border-border/70 bg-transparent px-2.5 text-xs font-medium shadow-none hover:bg-accent dark:bg-transparent dark:hover:bg-accent [&_svg:not([class*='size-'])]:size-3.5 @max-lg:[&_svg.lucide-chevron-down]:hidden";
+const pillLabel = "@max-lg:sr-only";
 
 interface ArtifactPanelProps {
   conversationId: string;

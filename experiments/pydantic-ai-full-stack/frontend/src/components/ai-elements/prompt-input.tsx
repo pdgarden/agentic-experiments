@@ -1,12 +1,5 @@
 import { ArrowUp, Paperclip, Square } from "lucide-react";
-import {
-  type ComponentProps,
-  type DragEvent,
-  type KeyboardEvent,
-  type ReactNode,
-  useRef,
-  useState,
-} from "react";
+import { type ComponentProps, type DragEvent, type KeyboardEvent, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/utils";
@@ -97,20 +90,6 @@ export function PromptInputTextarea({ onSubmitKey, className, ...props }: Textar
   );
 }
 
-export function PromptInputToolbar({ children }: { children: ReactNode }) {
-  return <div className="flex items-center gap-1 pt-1">{children}</div>;
-}
-
-/** "⏎ send · ⇧⏎ new line", hidden on narrow screens. */
-export function PromptInputHint() {
-  return (
-    <span aria-hidden className="ml-1 hidden text-xs text-muted-foreground select-none sm:inline">
-      <kbd className="font-sans">⏎</kbd> send <span className="mx-1 opacity-60">·</span>
-      <kbd className="font-sans">⇧⏎</kbd> new line
-    </span>
-  );
-}
-
 interface SubmitProps {
   running: boolean;
   disabled: boolean;
@@ -135,6 +114,7 @@ export function PromptInputSubmit({ running, disabled, onStop }: SubmitProps) {
       size="icon"
       disabled={disabled}
       aria-label="Send"
+      title="Enter to send, Shift+Enter for a new line"
       className="rounded-full motion-safe:transition-transform motion-safe:hover:scale-105 motion-safe:active:scale-95"
     >
       <ArrowUp />

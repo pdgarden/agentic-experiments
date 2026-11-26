@@ -1,7 +1,7 @@
 import { screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import type { ConversationSettings, McpServerInfo } from "@/api/types";
-import { withServer } from "@/components/mcp/McpPicker";
+import { withServer } from "@/components/mcp/McpMenu";
 import { McpServers } from "@/components/mcp/McpServers";
 import { json, mcpServer, mockApi, renderWithClient } from "@/test/server";
 

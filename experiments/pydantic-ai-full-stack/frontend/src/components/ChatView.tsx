@@ -28,7 +28,7 @@ import { InterruptedBanner } from "@/components/InterruptedBanner";
 import { LogoMark } from "@/components/LogoMark";
 import { MessageView } from "@/components/MessageParts";
 import { ModelPicker } from "@/components/ModelPicker";
-import { McpPicker } from "@/components/mcp/McpPicker";
+import { McpMenu } from "@/components/mcp/McpMenu";
 import { Suggestions } from "@/components/Suggestions";
 import { Alert, RetryButton } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -196,16 +196,6 @@ function ChatSession({
             <h1 className="min-w-0 flex-1 truncate text-sm font-medium" data-testid="chat-title">
               {title}
             </h1>
-            {settings && (
-              <McpPicker servers={servers} settings={settings} onChange={changeSettings} />
-            )}
-            {settings && (
-              <ModelPicker
-                models={catalogue.models}
-                settings={settings}
-                onChange={changeSettings}
-              />
-            )}
             {created && openArtifactId === null && (
               <ArtifactsToggle conversationId={conversationId} onOpen={setOpenArtifactId} />
             )}
@@ -248,6 +238,21 @@ function ChatSession({
               conversationId={conversationId}
               running={chat.running}
               onSend={send}
+              menuItems={
+                settings && servers.length > 0 ? (
+                  <McpMenu servers={servers} settings={settings} onChange={changeSettings} />
+                ) : undefined
+              }
+              footer={
+                settings && (
+                  <ModelPicker
+                    models={catalogue.models}
+                    settings={settings}
+                    onChange={changeSettings}
+                    className="ml-auto max-w-[60%] shrink-0"
+                  />
+                )
+              }
               onStop={() => {
                 setStopError(null);
                 chat.cancel().catch((err: Error) => setStopError(`Could not stop: ${err.message}`));
@@ -294,7 +299,7 @@ function LoadError({
   );
 }
 
-/** The chat's shape while it loads: the header, a few message-shaped blocks, the composer. */
+/** The chat's shape while it loads: the header, a few message-shaped blocks, the composer and its footer. */
 function ChatSkeleton({ messages }: { messages: boolean }) {
   return (
     <div className="flex h-full min-w-0 flex-1 flex-col">
@@ -303,8 +308,6 @@ function ChatSkeleton({ messages }: { messages: boolean }) {
       </span>
       <div className="flex h-12 items-center gap-2 border-b border-border/60 px-4">
         <Skeleton className="h-4 w-40 max-w-[40%]" />
-        <Skeleton className="ml-auto h-7 w-16 rounded-full" />
-        <Skeleton className="h-7 w-24 rounded-full" />
       </div>
       <div className="mx-auto w-full max-w-3xl flex-1 space-y-6 overflow-hidden px-4 py-8">
         {messages && (
@@ -330,7 +333,10 @@ function ChatSkeleton({ messages }: { messages: boolean }) {
         )}
       </div>
       <div className="mx-auto w-full max-w-3xl px-4 pb-4">
-        <Skeleton className="h-[6.5rem] rounded-2xl" />
+        <Skeleton className="h-14 rounded-2xl" />
+        <div className="flex justify-end px-2 pt-1.5">
+          <Skeleton className="h-5 w-28" />
+        </div>
       </div>
     </div>
   );

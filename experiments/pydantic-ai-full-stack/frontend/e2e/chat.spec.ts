@@ -25,23 +25,27 @@ test("chat, pick a thinking model, reload, rename and delete", async ({ page }) 
   await expect(chats.getByRole("button", { name: "E2E title", exact: true }).first()).toBeVisible();
 
   // Turn thinking on: the next reply streams reasoning first.
-  await page.getByRole("combobox", { name: "Thinking" }).click();
-  await page.getByRole("option", { name: "Thinking high" }).click();
+  const picker = page.getByRole("button", { name: "Model and thinking" });
+  await picker.click();
+  await page.getByRole("menuitemradio", { name: "High" }).click();
+  await expect(page.getByRole("menu")).toHaveCount(0);
+  await expect(picker).toContainText("· High");
   await send(page, "Think about it");
   const reply = page.getByTestId("assistant-message").nth(1);
   await expect(reply).toContainText("You said: Think about it");
   await expect(reply.getByTestId("reasoning")).toContainText("Reasoning");
 
   // A model without thinking hides the level.
-  await page.getByRole("combobox", { name: "Model" }).click();
-  await page.getByRole("option", { name: "GPT mini" }).click();
-  await expect(page.getByRole("combobox", { name: "Thinking" })).toHaveCount(0);
+  await picker.click();
+  await page.getByRole("menuitemradio", { name: "GPT mini" }).click();
+  await expect(page.getByRole("menuitemradio", { name: "High" })).toHaveCount(0);
+  await page.keyboard.press("Escape");
 
   // History and settings come back from the server.
   await page.reload();
   await expect(page.getByTestId("user-message")).toHaveCount(2);
   await expect(page.getByTestId("assistant-message").nth(1).getByTestId("reasoning")).toBeVisible();
-  await expect(page.getByRole("combobox", { name: "Model" })).toHaveText("GPT mini");
+  await expect(page.getByRole("button", { name: "Model and thinking" })).toHaveText("GPT mini");
 
   // Rename, then delete.
   const renamed = unique("Greetings");

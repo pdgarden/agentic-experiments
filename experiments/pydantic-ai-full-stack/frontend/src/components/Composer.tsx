@@ -6,12 +6,13 @@ import {
   FileSpreadsheet,
   FileText,
   Loader2,
-  Paperclip,
   X,
 } from "lucide-react";
 import {
   type ClipboardEvent,
   type FormEvent,
+  type KeyboardEvent,
+  type ReactNode,
   type Ref,
   useImperativeHandle,
   useRef,
@@ -21,13 +22,11 @@ import { api } from "@/api/client";
 import type { UploadedFile } from "@/api/types";
 import {
   PromptInput,
-  PromptInputHint,
   PromptInputSubmit,
   PromptInputTextarea,
-  PromptInputToolbar,
 } from "@/components/ai-elements/prompt-input";
+import { attachShortcut, ComposerMenu } from "@/components/ComposerMenu";
 import { Alert } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/utils";
 
 // The backend's allowlist (backend/src/store/files.py). Browsers often give `.md` no type.
@@ -162,10 +161,22 @@ interface ComposerProps {
   running: boolean;
   onSend: (text: string, files: FileUIPart[]) => Promise<void>;
   onStop: () => void;
+  /** Items the chat adds to the `+` menu, under "Attach files". */
+  menuItems?: ReactNode;
+  /** The line under the box (settings chips, the model button), laid out left to right. */
+  footer?: ReactNode;
 }
 
 /** Message input with attachments: each file is uploaded as soon as it is added. */
-export function Composer({ ref, conversationId, running, onSend, onStop }: ComposerProps) {
+export function Composer({
+  ref,
+  conversationId,
+  running,
+  onSend,
+  onStop,
+  menuItems,
+  footer,
+}: ComposerProps) {
   const [text, setText] = useState("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [sending, setSending] = useState(false);
@@ -235,6 +246,15 @@ export function Composer({ ref, conversationId, running, onSend, onStop }: Compo
     }
   };
 
+  const attach = () => fileInput.current?.click();
+
+  // Only while focus is in the composer; Ctrl+U is "view source" in some browsers.
+  const onKeyDown = (event: KeyboardEvent) => {
+    if (!attachShortcut.matches(event)) return;
+    event.preventDefault();
+    attach();
+  };
+
   const onPaste = (event: ClipboardEvent) => {
     if (event.clipboardData.files.length > 0) {
       event.preventDefault();
@@ -243,25 +263,15 @@ export function Composer({ ref, conversationId, running, onSend, onStop }: Compo
   };
 
   return (
-    <PromptInput onSubmit={submit} onDropFiles={add}>
-      {attachments.length > 0 && (
-        <ul className="flex flex-wrap gap-2 px-1 pt-1 pb-2" aria-label="Attachments">
-          {attachments.map((a) => (
-            <AttachmentCard key={a.key} attachment={a} onRemove={() => remove(a.key)} />
-          ))}
-        </ul>
-      )}
-      <PromptInputTextarea
-        ref={textarea}
-        value={text}
-        onChange={(event) => setText(event.target.value)}
-        onSubmitKey={() => void submit()}
-        onPaste={onPaste}
-        placeholder="Message the agent…"
-        aria-label="Message"
-        autoFocus
-      />
-      <PromptInputToolbar>
+    <div>
+      <PromptInput onSubmit={submit} onDropFiles={add} onKeyDown={onKeyDown}>
+        {attachments.length > 0 && (
+          <ul className="flex flex-wrap gap-2 px-1 pt-1 pb-2" aria-label="Attachments">
+            {attachments.map((a) => (
+              <AttachmentCard key={a.key} attachment={a} onRemove={() => remove(a.key)} />
+            ))}
+          </ul>
+        )}
         <input
           ref={fileInput}
           type="file"
@@ -274,26 +284,35 @@ export function Composer({ ref, conversationId, running, onSend, onStop }: Compo
             event.target.value = "";
           }}
         />
-        <Button
-          type="button"
-          size="icon"
-          variant="ghost"
-          aria-label="Attach files"
-          className="rounded-full text-muted-foreground hover:text-foreground"
-          onClick={() => fileInput.current?.click()}
-        >
-          <Paperclip />
-        </Button>
-        <PromptInputHint />
-        <div className="ml-auto">
-          <PromptInputSubmit running={running} disabled={!canSend} onStop={onStop} />
+        {/* One row while the text is one line; the buttons stay at the bottom as it grows. */}
+        <div className="flex items-end gap-1">
+          <div className="flex h-10 shrink-0 items-center">
+            <ComposerMenu onAttach={attach} items={menuItems} />
+          </div>
+          <PromptInputTextarea
+            ref={textarea}
+            value={text}
+            onChange={(event) => setText(event.target.value)}
+            onSubmitKey={() => void submit()}
+            onPaste={onPaste}
+            placeholder="Message the agent…"
+            aria-label="Message"
+            autoFocus
+            className="px-1.5 py-2.5"
+          />
+          <div className="flex h-10 shrink-0 items-center">
+            <PromptInputSubmit running={running} disabled={!canSend} onStop={onStop} />
+          </div>
         </div>
-      </PromptInputToolbar>
-      {error && (
-        <Alert size="sm" className="mx-1 mt-2">
-          {error}
-        </Alert>
+        {error && (
+          <Alert size="sm" className="mx-1 mt-2">
+            {error}
+          </Alert>
+        )}
+      </PromptInput>
+      {footer && (
+        <div className="flex items-start justify-between gap-2 px-2 pt-1.5 text-xs">{footer}</div>
       )}
-    </PromptInput>
+    </div>
   );
 }

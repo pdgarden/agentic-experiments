@@ -3,6 +3,7 @@
 Full-stack chat app around a Pydantic AI agent. `PLAN.md` is the design (decisions, run lifecycle, roadmap); `README.md` has setup and status. Status: phases 1 and 2 done (backend + frontend); the gateway spike waits for a `backend/.env`. Phase 3 (human in the loop) next.
 
 - UI polish: `UI_PLAN.md` (all 8 steps done; its *Step notes* record the design decisions and open follow-ups).
+- Composer settings: `COMPOSER_PLAN.md` (moves the MCP, model and thinking pickers from the header into the composer: `+` menu and a footer line; all 3 steps done).
 - Checks: `make check` (both sides), `make e2e` (Playwright, scripted model), `make fixtures` after a stream change.
 - Frontend: Vite + React + TS strict, pnpm (`npx -y pnpm@11.28.2` if not on PATH), Biome, Vitest. Run frontend commands from `frontend/`.
 - Backend: Python 3.12+, managed with uv. Run backend commands from `backend/` (`uv sync`, `uv run …`).

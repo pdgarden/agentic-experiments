@@ -2,6 +2,7 @@ import { fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { Composer, withMediaType } from "@/components/Composer";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { json, mockApi, renderWithClient } from "@/test/server";
 
 const uploaded = (name: string, type: string) => ({
@@ -34,6 +35,38 @@ describe("Composer", () => {
       { type: "file", mediaType: "text/markdown", filename: "notes.md", url: "/api/files/f1" },
     ]);
     expect(screen.queryByTestId("attachment")).not.toBeInTheDocument();
+  });
+
+  it("attaches files from the + menu and with the shortcut", async () => {
+    mockApi({ "POST /api/files": () => json(uploaded("notes.md", "text/markdown")) });
+    renderWithClient(
+      <Composer
+        conversationId="c1"
+        running={false}
+        onSend={async () => {}}
+        onStop={() => {}}
+        menuItems={<DropdownMenuItem>Extra</DropdownMenuItem>}
+      />,
+    );
+    const user = userEvent.setup();
+    const input = screen.getByTestId("file-input") as HTMLInputElement;
+    const picked = vi.fn();
+    input.addEventListener("click", picked);
+
+    await user.click(screen.getByRole("button", { name: "Add" }));
+    expect(await screen.findByRole("menuitem", { name: "Extra" })).toBeInTheDocument();
+    await user.click(screen.getByRole("menuitem", { name: /Attach files/ }));
+    expect(picked).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+
+    // Ctrl+U in jsdom (not a Mac), only while focus is inside the composer.
+    await user.click(screen.getByLabelText("Message"));
+    await user.keyboard("{Control>}u{/Control}");
+    expect(picked).toHaveBeenCalledTimes(2);
+    await user.upload(input, new File(["# hi"], "notes.md"));
+    await waitFor(() =>
+      expect(screen.getByTestId("attachment")).toHaveAttribute("data-status", "ready"),
+    );
   });
 
   it("waits for uploads before sending, and leaves failed ones out", async () => {
